@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, unwrap } from '@/api/client';
-import { SESSION_KEY, useSession } from '@/auth/session';
+import type { Avatar } from '@/api/types';
+import { forSameSession, SESSION_KEY, useSession } from '@/auth/session';
+import { fileBody } from '@/lib/images';
 
 // Con el usuario en la clave: los datos de una cuenta nunca se leen con otra.
 export const avatarKey = (userId: string | undefined) => ['me', 'avatar', userId] as const;
@@ -19,28 +21,16 @@ export function useMyAvatar() {
   });
 }
 
-export const AVATAR_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-export const AVATAR_MAX_BYTES = 2 * 1024 * 1024;
-
 export function useUploadAvatar() {
   const queryClient = useQueryClient();
   const { data: session } = useSession();
   return useMutation({
-    mutationFn: (file: File) =>
-      unwrap(
-        api.PUT('/api/users/me/avatar', {
-          body: { file: '' },
-          bodySerializer: () => {
-            const data = new FormData();
-            data.append('file', file);
-            return data;
-          },
-        }),
-      ),
-    onSuccess: (avatar) => {
+    mutationFn: (file: File) => unwrap(api.PUT('/api/users/me/avatar', fileBody(file))),
+    // La foto de una cuenta nunca queda guardada a nombre de otra.
+    ...forSameSession(queryClient, (avatar: Avatar) => {
       queryClient.setQueryData(avatarKey(session?.user.id), avatar);
       void queryClient.invalidateQueries({ queryKey: SESSION_KEY });
-    },
+    }),
   });
 }
 
@@ -49,10 +39,10 @@ export function useRemoveAvatar() {
   const { data: session } = useSession();
   return useMutation({
     mutationFn: () => unwrap(api.DELETE('/api/users/me/avatar')),
-    onSuccess: () => {
+    ...forSameSession(queryClient, () => {
       queryClient.removeQueries({ queryKey: avatarKey(session?.user.id) });
       void queryClient.invalidateQueries({ queryKey: SESSION_KEY });
-    },
+    }),
   });
 }
 

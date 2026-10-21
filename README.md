@@ -48,7 +48,7 @@ Cross-Origin-Opener-Policy: same-origin
 
 - `script-src`: el hash del script en línea de `index.html` (aplica el tema antes de pintar). Calcúlalo sobre el build con `yarn build && yarn csp:hash`; si se edita ese script hay que actualizar el hash, o el tema deja de aplicarse sin aviso.
 - `style-src 'unsafe-inline'`: los avisos (sonner) y Radix insertan estilos en tiempo de ejecución.
-- `img-src`: las fotos de perfil y los logos llegan por URL firmada de Supabase Storage.
+- `img-src`: las fotos de perfil llegan por URL firmada de Supabase Storage (bucket privado) y los logos por la URL pública del bucket `logos` (público a propósito: van en los boletines). Ambas son del dominio del proyecto de Supabase.
 - Caché: `index.html` con `Cache-Control: no-cache`; `assets/*` (llevan hash en el nombre) con `public, max-age=31536000, immutable`.
 - Rutas: cualquier ruta desconocida debe devolver `index.html` (aplicación de una sola página).
 

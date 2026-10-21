@@ -9,6 +9,7 @@ const node = (slug: string, children: MenuNode[] = []): MenuNode => ({
   icon: null,
   displayOrder: 0,
   permissions: perms,
+  institutionWide: perms,
   children,
 });
 

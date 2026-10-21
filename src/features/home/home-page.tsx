@@ -1,9 +1,9 @@
 import { Link } from 'react-router';
-import type { MenuNode } from '@/api/types';
 import { useSession } from '@/auth/session';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MenuIcon } from '@/features/menu/menu-icon';
-import { slugToPath, useMyMenu } from '@/features/menu/menu';
+import { slugToPath } from '@/features/menu/menu';
+import { useNavMenu, type NavNode } from '@/features/menu/nav-menu';
 import { PageHeader } from '@/features/layout/page-header';
 
 function greeting(date = new Date()): string {
@@ -15,9 +15,9 @@ function greeting(date = new Date()): string {
 
 /** Opciones con página propia (hojas del árbol), con su grupo. */
 function leaves(
-  nodes: readonly MenuNode[],
+  nodes: readonly NavNode[],
   group?: string,
-): { node: MenuNode; group: string | undefined }[] {
+): { node: NavNode; group: string | undefined }[] {
   return nodes.flatMap((node) =>
     node.children.length > 0 ? leaves(node.children, node.name) : [{ node, group }],
   );
@@ -25,7 +25,7 @@ function leaves(
 
 export function HomePage() {
   const { data: session } = useSession();
-  const { data: menu, isPending, fetchStatus } = useMyMenu();
+  const { nodes: menu, loading } = useNavMenu();
   if (!session) return null;
   const shortcuts = menu ? leaves(menu) : [];
 
@@ -35,7 +35,7 @@ export function HomePage() {
         title={`${greeting()}, ${session.user.firstName}`}
         description="Estos son los módulos a los que tienes acceso."
       />
-      {isPending && fetchStatus !== 'idle' ? (
+      {loading ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" aria-hidden="true">
           {[0, 1, 2, 3, 4, 5].map((i) => (
             <Skeleton key={i} className="h-24 rounded-2xl" />
@@ -45,9 +45,7 @@ export function HomePage() {
         <div className="rounded-2xl border border-dashed border-rule bg-card p-8 text-center">
           <p className="font-bold">Todavía no tienes módulos asignados.</p>
           <p className="mt-1 text-muted-foreground">
-            {session.user.userType === 'SUPER_ADMIN'
-              ? 'Como administrador general, gestionarás instituciones y plantillas desde aquí cuando esas pantallas estén listas.'
-              : 'Pide a la administración de tu institución que te asigne un rol.'}
+            Pide a la administración de tu institución que te asigne un rol.
           </p>
         </div>
       ) : (

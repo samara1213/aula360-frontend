@@ -1880,18 +1880,18 @@ export interface components {
              * @default 1
              * @example 1
              */
-            gradingScaleMin: number;
+            gradingScaleMin?: number;
             /**
              * @default 5
              * @example 5
              */
-            gradingScaleMax: number;
+            gradingScaleMax?: number;
             /**
              * @description Nota mínima aprobatoria (entre el mínimo y el máximo)
              * @default 3
              * @example 3
              */
-            passingScore: number;
+            passingScore?: number;
         };
         UpdateInstitutionDto: {
             /** @example 000000000-0 */
@@ -1905,18 +1905,18 @@ export interface components {
              * @default 1
              * @example 1
              */
-            gradingScaleMin: number;
+            gradingScaleMin?: number;
             /**
              * @default 5
              * @example 5
              */
-            gradingScaleMax: number;
+            gradingScaleMax?: number;
             /**
              * @description Nota mínima aprobatoria (entre el mínimo y el máximo)
              * @default 3
              * @example 3
              */
-            passingScore: number;
+            passingScore?: number;
         };
         CampusResponseDto: {
             /**
@@ -1999,6 +1999,8 @@ export interface components {
             /** @description Orden entre hermanos (ascendente) */
             displayOrder: number;
             permissions: components["schemas"]["MenuNodePermissionsDto"];
+            /** @description Los permisos que valen en toda la institución (sin contar los de roles limitados a una sede). Las acciones que exigen alcance de toda la institución (logo, sedes, roles) se muestran según estos. */
+            institutionWide: components["schemas"]["MenuNodePermissionsDto"];
             children: components["schemas"]["MyMenuNodeDto"][];
         };
         MenuOptionTreeNodeDto: {
@@ -2078,7 +2080,7 @@ export interface components {
              * @description Orden entre hermanos (ascendente)
              * @default 0
              */
-            displayOrder: number;
+            displayOrder?: number;
         };
         UpdateMenuOptionDto: {
             /**
@@ -2097,7 +2099,7 @@ export interface components {
              * @description Orden entre hermanos (ascendente)
              * @default 0
              */
-            displayOrder: number;
+            displayOrder?: number;
         };
         RoleResponseDto: {
             /**
@@ -2195,17 +2197,17 @@ export interface components {
              * @description Puede crear
              * @default false
              */
-            canCreate: boolean;
+            canCreate?: boolean;
             /**
              * @description Puede editar
              * @default false
              */
-            canUpdate: boolean;
+            canUpdate?: boolean;
             /**
              * @description Puede borrar o desactivar
              * @default false
              */
-            canDelete: boolean;
+            canDelete?: boolean;
         };
         ReplaceRolePermissionsDto: {
             /** @description Cada opción incluida se puede ver; can_* habilitan el resto */
@@ -3646,7 +3648,7 @@ export interface components {
              * @description Generarlo aunque falten definitivas (salen como pendientes y el promedio es parcial)
              * @default false
              */
-            force: boolean;
+            force?: boolean;
         };
         ReportCardStudentDto: {
             /**
@@ -3720,7 +3722,7 @@ export interface components {
              * @description Generar también los que tienen materias pendientes (sin ninguna definitiva se omiten siempre)
              * @default false
              */
-            force: boolean;
+            force?: boolean;
         };
         BatchSkippedDto: {
             /**

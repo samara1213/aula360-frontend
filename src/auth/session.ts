@@ -25,6 +25,40 @@ export function useSession() {
   return useQuery({ queryKey: SESSION_KEY, queryFn: fetchSession, staleTime: 5 * 60_000 });
 }
 
+/** Quién es y dónde trabaja: si cambia, los datos guardados ya no le corresponden. */
+export function sessionIdentity(session: Session | null | undefined): string | undefined {
+  if (session === undefined) return undefined;
+  if (session === null) return 'sin-sesion';
+  return `${session.user.id}|${session.activeInstitutionId ?? '-'}|${String(session.user.mustChangePassword)}`;
+}
+
+function currentIdentity(queryClient: QueryClient): string | undefined {
+  return sessionIdentity(queryClient.getQueryData<Session | null>(SESSION_KEY));
+}
+
+/**
+ * onMutate y onSuccess de una mutación que guarda su respuesta en la caché: si
+ * mientras esperaba cambió la sesión (otra cuenta u otra institución, también
+ * desde otra pestaña), la respuesta se descarta. resetCache borra las
+ * consultas, pero no detiene las peticiones en curso (M1 de la fase 3b-1).
+ */
+export function forSameSession<TData, TVariables>(
+  queryClient: QueryClient,
+  onSuccess: (data: TData, variables: TVariables) => unknown,
+) {
+  return {
+    onMutate: () => ({ identity: currentIdentity(queryClient) }),
+    onSuccess: (
+      data: TData,
+      variables: TVariables,
+      started: { identity: string | undefined } | undefined,
+    ) => {
+      if (started?.identity !== currentIdentity(queryClient)) return;
+      return onSuccess(data, variables);
+    },
+  };
+}
+
 /** Deja la caché solo con la sesión indicada (datos de otra cuenta o institución, fuera). */
 export function resetCache(queryClient: QueryClient, session: Session | null) {
   // No clear(): desconectaría a los componentes que observan la sesión.

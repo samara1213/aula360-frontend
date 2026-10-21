@@ -1,25 +1,19 @@
-import AxeBuilder from '@axe-core/playwright';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import { expectAccessible, expectNoHorizontalScroll, trackConsole } from './checks';
 import { mockApi, SESSION, setTheme, THEMES, VIEWPORTS } from './fixtures';
-
-async function expectAccessible(page: Page) {
-  const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
-  expect(
-    results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`),
-  ).toEqual([]);
-}
-
-async function expectNoHorizontalScroll(page: Page) {
-  const overflow = await page.evaluate(
-    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
-  );
-  expect(overflow).toBeLessThanOrEqual(0);
-}
 
 for (const viewport of VIEWPORTS) {
   for (const theme of THEMES) {
     test.describe(`${viewport.name}, tema ${theme}`, () => {
       test.use({ viewport: { width: viewport.width, height: viewport.height } });
+
+      let consoleMessages: string[] = [];
+      test.beforeEach(({ page }) => {
+        consoleMessages = trackConsole(page);
+      });
+      test.afterEach(() => {
+        expect(consoleMessages).toEqual([]);
+      });
 
       test('login', async ({ page }, info) => {
         await setTheme(page, theme);

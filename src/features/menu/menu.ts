@@ -36,9 +36,18 @@ const NONE: MenuPermissions = { view: false, create: false, update: false, delet
 /**
  * Permisos del usuario en una opción. Solo sirven para la interfaz (mostrar u
  * ocultar botones): quien decide es el backend.
+ * institutionWide: los que valen en toda la institución (sin los de roles
+ * limitados a una sede). Las acciones que el backend exige en toda la
+ * institución (logo, sedes) se muestran según estos.
  */
-export function usePermissions(slug: string): MenuPermissions & { isLoading: boolean } {
+export function usePermissions(
+  slug: string,
+): MenuPermissions & { institutionWide: MenuPermissions; isLoading: boolean } {
   const { data, isLoading } = useMyMenu();
   const node = data ? findBySlug(data, slug) : undefined;
-  return { ...(node?.permissions ?? NONE), isLoading };
+  return {
+    ...(node?.permissions ?? NONE),
+    institutionWide: node?.institutionWide ?? NONE,
+    isLoading,
+  };
 }

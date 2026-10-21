@@ -1,15 +1,8 @@
 import type { Query, QueryClient } from '@tanstack/react-query';
 import type { Session } from '@/api/types';
-import { removeNonSessionQueries, SESSION_KEY } from './session';
+import { removeNonSessionQueries, SESSION_KEY, sessionIdentity as identity } from './session';
 
 const CHANNEL = 'aula360-session';
-
-/** Quién es y dónde trabaja: si cambia, los datos guardados ya no le corresponden. */
-function identity(session: Session | null | undefined): string | undefined {
-  if (session === undefined) return undefined;
-  if (session === null) return 'sin-sesion';
-  return `${session.user.id}|${session.activeInstitutionId ?? '-'}|${String(session.user.mustChangePassword)}`;
-}
 
 /**
  * Mantiene las pestañas de acuerdo (M2 de la fase 3a). Las cookies son las

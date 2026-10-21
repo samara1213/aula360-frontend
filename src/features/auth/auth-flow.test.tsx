@@ -17,6 +17,7 @@ const MENU: MenuNode[] = [
     icon: 'book-open',
     displayOrder: 1,
     permissions: { view: true, create: false, update: false, delete: false },
+    institutionWide: { view: true, create: false, update: false, delete: false },
     children: [
       {
         id: 'm2',
@@ -25,6 +26,7 @@ const MENU: MenuNode[] = [
         icon: 'calendar-range',
         displayOrder: 1,
         permissions: { view: true, create: true, update: true, delete: false },
+        institutionWide: { view: true, create: true, update: true, delete: false },
         children: [],
       },
     ],

@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ImageUp, Mail, Trash2 } from 'lucide-react';
-import { useEffect, useRef, type ReactNode, type Ref } from 'react';
+import { Mail } from 'lucide-react';
+import { useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { useLocation } from 'react-router';
 import { toast } from 'sonner';
@@ -9,14 +9,14 @@ import { errorMessage } from '@/api/errors';
 import { useSession } from '@/auth/session';
 import { Field } from '@/components/form/field';
 import { IconInput, PasswordInput } from '@/components/form/inputs';
+import { ImageUpload } from '@/components/image-upload';
+import { Section } from '@/components/section';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/user-avatar';
 import { ChangePasswordForm } from '@/features/auth/change-password-form';
 import { PageHeader } from '@/features/layout/page-header';
 import {
-  AVATAR_MAX_BYTES,
-  AVATAR_TYPES,
   useChangeEmail,
   useMyAvatar,
   useRemoveAvatar,
@@ -55,54 +55,13 @@ export function ProfilePage() {
   );
 }
 
-function Section({
-  title,
-  id,
-  sectionRef,
-  children,
-}: {
-  title: string;
-  id?: string;
-  sectionRef?: Ref<HTMLElement>;
-  children: ReactNode;
-}) {
-  return (
-    <section
-      id={id}
-      ref={sectionRef}
-      aria-label={title}
-      className="flex scroll-mt-24 flex-col gap-5 rounded-2xl border border-border bg-card p-5 sm:p-7"
-    >
-      <h2 className="text-xl font-extrabold tracking-tight">{title}</h2>
-      {children}
-    </section>
-  );
-}
-
 function AvatarSection() {
   const { data: session } = useSession();
   const { data: avatar } = useMyAvatar();
   const upload = useUploadAvatar();
   const remove = useRemoveAvatar();
-  const input = useRef<HTMLInputElement>(null);
   if (!session) return null;
   const { user } = session;
-
-  const onFile = (file: File | undefined) => {
-    if (!file) return;
-    if (!AVATAR_TYPES.includes(file.type)) {
-      toast.error('Usa una imagen JPG, PNG o WEBP.');
-      return;
-    }
-    if (file.size > AVATAR_MAX_BYTES) {
-      toast.error('La imagen pesa más de 2 MB. Elige una más liviana.');
-      return;
-    }
-    upload.mutate(file, {
-      onSuccess: () => toast.success('Foto actualizada.'),
-      onError: (error) => toast.error(errorMessage(error)),
-    });
-  };
 
   return (
     <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
@@ -112,46 +71,24 @@ function AvatarSection() {
         url={avatar?.url}
         className="size-24 text-2xl"
       />
-      <div className="flex flex-col gap-3">
-        <p className="text-sm text-muted-foreground">JPG, PNG o WEBP de máximo 2 MB.</p>
-        <div className="flex flex-wrap gap-2">
-          <input
-            ref={input}
-            type="file"
-            accept={AVATAR_TYPES.join(',')}
-            className="sr-only"
-            tabIndex={-1}
-            aria-hidden="true"
-            onChange={(e) => {
-              onFile(e.target.files?.[0]);
-              e.target.value = '';
-            }}
-          />
-          <Button
-            variant="outline"
-            disabled={upload.isPending}
-            onClick={() => input.current?.click()}
-          >
-            <ImageUp aria-hidden="true" />
-            {upload.isPending ? 'Subiendo…' : user.hasAvatar ? 'Cambiar foto' : 'Subir foto'}
-          </Button>
-          {user.hasAvatar && (
-            <Button
-              variant="ghost"
-              disabled={remove.isPending}
-              onClick={() => {
-                remove.mutate(undefined, {
-                  onSuccess: () => toast.success('Foto quitada.'),
-                  onError: (error) => toast.error(errorMessage(error)),
-                });
-              }}
-            >
-              <Trash2 aria-hidden="true" />
-              Quitar foto
-            </Button>
-          )}
-        </div>
-      </div>
+      <ImageUpload
+        noun="foto"
+        hasImage={user.hasAvatar}
+        uploading={upload.isPending}
+        removing={remove.isPending}
+        onFile={(file) => {
+          upload.mutate(file, {
+            onSuccess: () => toast.success('Foto actualizada.'),
+            onError: (error) => toast.error(errorMessage(error)),
+          });
+        }}
+        onRemove={() => {
+          remove.mutate(undefined, {
+            onSuccess: () => toast.success('Foto quitada.'),
+            onError: (error) => toast.error(errorMessage(error)),
+          });
+        }}
+      />
     </div>
   );
 }

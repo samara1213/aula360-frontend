@@ -17,7 +17,7 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "api:types": "openapi-typescript ../aula360-backend/openapi.json -o src/api/schema.d.ts",
+    "api:types": "openapi-typescript ../aula360-backend/openapi.json -o src/api/schema.d.ts --default-non-nullable false",
     "test:e2e": "playwright test",
     "csp:hash": "node scripts/csp-hash.mjs"
   },

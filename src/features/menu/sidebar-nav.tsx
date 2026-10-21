@@ -1,11 +1,11 @@
 import { ChevronDown, House } from 'lucide-react';
 import { useId, useState } from 'react';
 import { NavLink, useLocation } from 'react-router';
-import type { MenuNode } from '@/api/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { MenuIcon } from './menu-icon';
-import { slugToPath, useMyMenu } from './menu';
+import { slugToPath } from './menu';
+import { useNavMenu, type NavNode as NavItem } from './nav-menu';
 
 type NavProps = {
   /** Solo íconos del primer nivel (menú contraído en portátil). */
@@ -23,11 +23,11 @@ const linkClasses = ({ isActive }: { isActive: boolean }) =>
   );
 
 /**
- * Menú dinámico (Padre → Hijo → Nieto) desde GET /menu-options/my-menu. Las
- * opciones con hijos son grupos (no tienen página propia).
+ * Menú dinámico (Padre → Hijo → Nieto) desde GET /menu-options/my-menu, más
+ * el menú fijo del SUPER_ADMIN (useNavMenu). Las opciones con hijos son grupos.
  */
 export function SidebarNav({ collapsed = false, onNavigate, onExpand }: NavProps) {
-  const { data: menu, isPending, isError, refetch, fetchStatus } = useMyMenu();
+  const { nodes: menu, loading, isError, refetch } = useNavMenu();
 
   return (
     <nav aria-label="Menú principal" className="flex flex-col gap-1 p-3">
@@ -42,7 +42,7 @@ export function SidebarNav({ collapsed = false, onNavigate, onExpand }: NavProps
         <span className={cn(collapsed && 'sr-only')}>Inicio</span>
       </NavLink>
 
-      {isPending && fetchStatus !== 'idle' && (
+      {loading && (
         <div className="flex flex-col gap-2 pt-2" aria-hidden="true">
           {[0, 1, 2, 3].map((i) => (
             <Skeleton key={i} className="h-10" />
@@ -72,7 +72,7 @@ export function SidebarNav({ collapsed = false, onNavigate, onExpand }: NavProps
   );
 }
 
-function containsPath(node: MenuNode, pathname: string): boolean {
+function containsPath(node: NavItem, pathname: string): boolean {
   if (pathname === slugToPath(node.slug) || pathname.startsWith(slugToPath(node.slug) + '/'))
     return true;
   return node.children.some((child) => containsPath(child, pathname));
@@ -83,7 +83,7 @@ function NavNode({
   depth,
   onNavigate,
 }: {
-  node: MenuNode;
+  node: NavItem;
   depth: number;
   onNavigate?: () => void;
 }) {
@@ -96,6 +96,7 @@ function NavNode({
     return (
       <NavLink
         to={slugToPath(node.slug)}
+        end={node.end}
         className={linkClasses}
         style={indent}
         onClick={onNavigate}
@@ -139,7 +140,7 @@ function NavNode({
   );
 }
 
-function CollapsedItem({ node, onExpand }: { node: MenuNode; onExpand?: () => void }) {
+function CollapsedItem({ node, onExpand }: { node: NavItem; onExpand?: () => void }) {
   const { pathname } = useLocation();
   const active = containsPath(node, pathname);
   return (

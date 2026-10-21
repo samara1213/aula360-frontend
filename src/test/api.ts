@@ -1,0 +1,85 @@
+import { http, HttpResponse } from 'msw';
+import type { MenuNode, MenuPermissions, Session } from '@/api/types';
+import { makeSession } from './render';
+import { server } from './server';
+
+export const apiUrl = (path: string) => new URL(path, window.location.origin).toString();
+
+export const FULL: MenuPermissions = { view: true, create: true, update: true, delete: true };
+export const NO_ACCESS: MenuPermissions = {
+  view: false,
+  create: false,
+  update: false,
+  delete: false,
+};
+export const VIEW_ONLY: MenuPermissions = {
+  view: true,
+  create: false,
+  update: false,
+  delete: false,
+};
+
+/** Por defecto, los permisos valen en toda la institución (institutionWide igual). */
+export function menuNode(
+  slug: string,
+  name: string,
+  permissions: MenuPermissions = FULL,
+  children: MenuNode[] = [],
+  institutionWide: MenuPermissions = permissions,
+): MenuNode {
+  return {
+    id: `m-${slug}`,
+    slug,
+    name,
+    icon: null,
+    displayOrder: 0,
+    permissions,
+    institutionWide,
+    children,
+  };
+}
+
+/**
+ * Grupo «Institución» con «Sedes», con los permisos que se pidan. Con
+ * `siteOnly`, esos permisos son de un rol limitado a una sede (en toda la
+ * institución no tiene ninguno).
+ */
+export function institutionMenu(
+  group: MenuPermissions = FULL,
+  campuses: MenuPermissions = FULL,
+  { siteOnly = false }: { siteOnly?: boolean } = {},
+): MenuNode[] {
+  const wide = (perms: MenuPermissions) => (siteOnly ? NO_ACCESS : perms);
+  return [
+    menuNode(
+      'institution',
+      'Institución',
+      group,
+      [menuNode('institution.campuses', 'Sedes', campuses, [], wide(campuses))],
+      wide(group),
+    ),
+  ];
+}
+
+/** Sesión iniciada con su menú (sin renovación: la sesión no vence en la prueba). */
+export function mockSignedIn(session: Session = makeSession(), menu: MenuNode[] = []) {
+  server.use(
+    http.get(apiUrl('/api/auth/me'), () => HttpResponse.json(session)),
+    http.get(apiUrl('/api/menu-options/my-menu'), () => HttpResponse.json(menu)),
+  );
+}
+
+export const superAdminSession = () =>
+  makeSession({
+    activeInstitutionId: null,
+    institutions: [],
+    user: { userType: 'SUPER_ADMIN', firstName: 'Fabio', lastName: 'Díaz' },
+  });
+
+export function page<T>(data: T[], page = 1, limit = 20, total = data.length) {
+  return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+}
+
+export function apiError(status: number, message: string) {
+  return HttpResponse.json({ statusCode: status, message }, { status });
+}

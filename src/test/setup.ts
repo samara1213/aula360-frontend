@@ -1,7 +1,11 @@
 import '@testing-library/jest-dom/vitest';
-import { cleanup } from '@testing-library/react';
+import { cleanup, configure } from '@testing-library/react';
 import { afterAll, afterEach, beforeAll } from 'vitest';
 import { server } from './server';
+
+// Las pantallas se cargan bajo demanda (lazy): con todos los archivos en
+// paralelo, la primera importación puede pasar del segundo que espera findBy.
+configure({ asyncUtilTimeout: 3000 });
 
 // jsdom no implementa matchMedia (lo usa el tema «Sistema»).
 Object.defineProperty(window, 'matchMedia', {
