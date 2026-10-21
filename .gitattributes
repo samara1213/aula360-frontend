@@ -1,0 +1,5 @@
+# Finales de línea LF en todas las máquinas: el hash CSP del script en línea
+# de index.html depende de los bytes exactos (ver README).
+* text=auto eol=lf
+*.png binary
+*.woff2 binary

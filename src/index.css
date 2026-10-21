@@ -1,0 +1,188 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import '@fontsource-variable/atkinson-hyperlegible-next/wght.css';
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Concepto «cuaderno y lapicero». Tokens con los nombres de shadcn/ui más los
+ * propios de Aula360 (marca, margen y niveles de desempeño). Los dos temas
+ * están diseñados por separado, con contraste AA.
+ */
+:root {
+  --background: #f5f7fa; /* Papel */
+  --foreground: #1a2142; /* Tinta */
+  --card: #ffffff; /* Hoja */
+  --card-foreground: #1a2142;
+  --popover: #ffffff;
+  --popover-foreground: #1a2142;
+  --primary: #2343c4; /* Lapicero */
+  --primary-hover: #3a5be0;
+  --primary-foreground: #ffffff;
+  --secondary: #eef2ff;
+  --secondary-foreground: #1a2142;
+  --muted: #eef1f6;
+  --muted-foreground: #4e5878;
+  --accent: #eef2ff;
+  --accent-foreground: #1a2142;
+  --destructive: #b42318;
+  --destructive-foreground: #ffffff;
+  --success: #0b544c;
+  --border: #e3e9f2; /* Renglón suave */
+  --rule: #cbd5e6; /* Renglón */
+  --input: #b8c3da;
+  --ring: #2343c4;
+  --margin: #d33f5a; /* Margen del cuaderno (solo acentos de marca) */
+  --radius: 0.75rem;
+
+  --stage: #1a2142; /* Panel de marca del login */
+  --stage-glow: rgb(35 67 196 / 0.85);
+
+  --sidebar: #ffffff;
+  --sidebar-foreground: #1a2142;
+  --sidebar-primary: #2343c4;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #eef2ff;
+  --sidebar-accent-foreground: #1a2142;
+  --sidebar-border: #e3e9f2;
+  --sidebar-ring: #2343c4;
+
+  /* Desempeño: siempre acompañado del nombre del nivel */
+  --level-bajo: #c2410c;
+  --level-bajo-foreground: #ffffff;
+  --level-basico: #f6e7b0;
+  --level-basico-foreground: #5e4700;
+  --level-alto: #cdebe3;
+  --level-alto-foreground: #0b544c;
+  --level-superior: #2343c4;
+  --level-superior-foreground: #ffffff;
+}
+
+.dark {
+  --background: #0f1530; /* Noche */
+  --foreground: #e7ebf7;
+  --card: #161e3c;
+  --card-foreground: #e7ebf7;
+  --popover: #161e3c;
+  --popover-foreground: #e7ebf7;
+  --primary: #8ea2ff;
+  --primary-hover: #a9b9ff;
+  --primary-foreground: #0e1430;
+  --secondary: #1c2650;
+  --secondary-foreground: #e7ebf7;
+  --muted: #1c2650;
+  --muted-foreground: #a9b3d3;
+  --accent: #222b52;
+  --accent-foreground: #e7ebf7;
+  --destructive: #ff8a7a;
+  --destructive-foreground: #2a0702;
+  --success: #93dccb;
+  --border: #2c3864;
+  --rule: #2c3864;
+  --input: #3b4878;
+  --ring: #8ea2ff;
+  --margin: #f07a8f;
+
+  --stage: #0a0f26;
+  --stage-glow: rgb(52 84 220 / 0.55);
+
+  --sidebar: #121a36;
+  --sidebar-foreground: #e7ebf7;
+  --sidebar-primary: #8ea2ff;
+  --sidebar-primary-foreground: #0e1430;
+  --sidebar-accent: #222b52;
+  --sidebar-accent-foreground: #e7ebf7;
+  --sidebar-border: #2c3864;
+  --sidebar-ring: #8ea2ff;
+
+  --level-bajo: #f08a4b;
+  --level-bajo-foreground: #1f0d02;
+  --level-basico: #4a3d10;
+  --level-basico-foreground: #f6e7b0;
+  --level-alto: #123b35;
+  --level-alto-foreground: #93dccb;
+  --level-superior: #8ea2ff;
+  --level-superior-foreground: #0e1430;
+}
+
+@theme inline {
+  --font-sans: 'Atkinson Hyperlegible Next Variable', system-ui, sans-serif;
+
+  /* Celular < 640, tablet 640–1023, portátil 1024–1439, escritorio ≥ 1440 */
+  --breakpoint-xl: 90rem;
+  --breakpoint-2xl: 120rem;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-border: var(--border);
+  --color-rule: var(--rule);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-margin: var(--margin);
+  --color-stage: var(--stage);
+  --color-stage-glow: var(--stage-glow);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-level-bajo: var(--level-bajo);
+  --color-level-bajo-foreground: var(--level-bajo-foreground);
+  --color-level-basico: var(--level-basico);
+  --color-level-basico-foreground: var(--level-basico-foreground);
+  --color-level-alto: var(--level-alto);
+  --color-level-alto-foreground: var(--level-alto-foreground);
+  --color-level-superior: var(--level-superior);
+  --color-level-superior-foreground: var(--level-superior-foreground);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 12px);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+    font-variant-numeric: tabular-nums;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
