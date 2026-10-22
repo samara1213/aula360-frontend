@@ -108,3 +108,26 @@ export function securityMenu(
     ),
   ];
 }
+
+/**
+ * Grupo «Personas» (docentes y estudiantes) y, si se pide, «Seguridad →
+ * Usuarios» (activar, desactivar y contraseña temporal). Con `siteOnly`, los
+ * permisos de Personas son de un rol limitado a una sede.
+ */
+export function peopleMenu(
+  permissions: MenuPermissions = FULL,
+  { siteOnly = false, users = NO_ACCESS }: { siteOnly?: boolean; users?: MenuPermissions } = {},
+): MenuNode[] {
+  const wide = siteOnly ? NO_ACCESS : permissions;
+  const leaf = (slug: string, name: string) => menuNode(slug, name, permissions, [], wide);
+  return [
+    menuNode(
+      'people',
+      'Personas',
+      permissions,
+      [leaf('people.teachers', 'Docentes'), leaf('people.students', 'Estudiantes')],
+      wide,
+    ),
+    menuNode('security', 'Seguridad', users, [menuNode('security.users', 'Usuarios', users)]),
+  ];
+}

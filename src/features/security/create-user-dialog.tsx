@@ -9,17 +9,13 @@ import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { DialogClose, DialogContent } from '@/components/ui/dialog';
 import { NativeSelect } from '@/components/ui/input';
-import { userTypeLabel } from '@/lib/roles';
 import { useAssignmentOptions } from './assignment-options';
-import { TemporaryPasswordPanel } from './temporary-password';
+import { CreatedAccountContent, type CreatedAccount } from './temporary-password';
 import { PersonalDataFields } from './user-form';
 import { emptyPersonalData, personalDataSchema } from './user-schema';
 import { useCreateUser, type UsersScope } from './users-api';
 
-const USER_TYPES = ['INSTITUTION_ADMIN', 'TEACHER', 'STUDENT'] as const;
-
 const schema = personalDataSchema.extend({
-  userType: z.enum(USER_TYPES),
   roleId: z.string().min(1, 'Elige el rol.'),
   campusId: z.string(),
 });
@@ -28,11 +24,11 @@ type FormOutput = z.output<typeof schema>;
 
 const FORM_ID = 'create-user-form';
 
-type Created = { id: string; name: string; password: string; emailed: boolean };
-
 /**
- * Crear un usuario con su primer rol. Al terminar muestra la contraseña
- * temporal (una sola vez) en el mismo diálogo. Va dentro de un <Dialog>.
+ * Crear un usuario administrativo con su primer rol. Los docentes y
+ * estudiantes se crean desde Personas, con su ficha. Al terminar muestra la
+ * contraseña temporal (una sola vez) en el mismo diálogo. Va dentro de un
+ * <Dialog>.
  */
 export function CreateUserDialog({
   scope,
@@ -44,12 +40,11 @@ export function CreateUserDialog({
 }) {
   const create = useCreateUser(scope);
   const options = useAssignmentOptions(scope);
-  const [created, setCreated] = useState<Created | null>(null);
+  const [created, setCreated] = useState<CreatedAccount | null>(null);
   const form = useForm<FormInput, unknown, FormOutput>({
     resolver: zodResolver(schema),
     defaultValues: {
       ...emptyPersonalData,
-      userType: 'INSTITUTION_ADMIN',
       roleId: '',
       campusId: '',
     },
@@ -58,29 +53,16 @@ export function CreateUserDialog({
 
   if (created) {
     return (
-      <DialogContent
+      <CreatedAccountContent
         title="Usuario creado"
-        // Cerrar borra la contraseña de la memoria de la mutación.
-        onCloseAutoFocus={() => {
+        created={created}
+        discard={() => {
           create.reset();
         }}
-        footer={
-          <Button
-            onClick={() => {
-              create.reset();
-              onDone(created.id);
-            }}
-          >
-            Listo
-          </Button>
-        }
-      >
-        <TemporaryPasswordPanel
-          name={created.name}
-          password={created.password}
-          emailed={created.emailed}
-        />
-      </DialogContent>
+        onDone={() => {
+          onDone(created.id);
+        }}
+      />
     );
   }
 
@@ -92,7 +74,7 @@ export function CreateUserDialog({
       return;
     }
     create.mutate(
-      { ...values, campusId: values.campusId || null },
+      { ...values, userType: 'INSTITUTION_ADMIN', campusId: values.campusId || null },
       {
         onSuccess: (user) => {
           toast.success(`Usuario ${user.firstName} ${user.lastName} creado.`);
@@ -110,7 +92,7 @@ export function CreateUserDialog({
   return (
     <DialogContent
       title="Nuevo usuario"
-      description="Recibe una contraseña temporal que debe cambiar al entrar."
+      description="Personal administrativo. Recibe una contraseña temporal que debe cambiar al entrar."
       className="sm:w-[min(92vw,680px)]"
       footer={
         <>
@@ -136,31 +118,16 @@ export function CreateUserDialog({
           </Alert>
         )}
         <PersonalDataFields register={form.register} errors={errors} />
-        <Field
-          label="Tipo de usuario"
-          error={errors.userType?.message}
-          hint="Los docentes y estudiantes con su ficha completa se crean desde Personas."
-        >
-          {(control) => (
-            <NativeSelect {...control} {...form.register('userType')}>
-              {USER_TYPES.map((type) => (
-                <option
-                  key={type}
-                  value={type}
-                  disabled={type === 'INSTITUTION_ADMIN' && !options.canCreateAdmins}
-                >
-                  {userTypeLabel(type)}
-                </option>
-              ))}
-            </NativeSelect>
-          )}
-        </Field>
+        <Alert>
+          Crea aquí al personal administrativo. Los docentes y estudiantes se crean desde Personas,
+          con su ficha completa.
+        </Alert>
         <div className="grid gap-5 sm:grid-cols-2">
           <Field label="Rol" error={errors.roleId?.message}>
             {(control) => (
               <NativeSelect {...control} {...form.register('roleId')}>
                 <option value="">Elige un rol</option>
-                {options.roles.map((role) => (
+                {options.staffRoles.map((role) => (
                   <option key={role.value} value={role.value}>
                     {role.label}
                   </option>
@@ -168,28 +135,22 @@ export function CreateUserDialog({
               </NativeSelect>
             )}
           </Field>
-          {scope.kind === 'institution' ? (
-            <Field label="Dónde" error={errors.campusId?.message}>
-              {(control) => (
-                <NativeSelect {...control} {...form.register('campusId')}>
-                  {options.allowWholeInstitution ? (
-                    <option value="">Toda la institución</option>
-                  ) : (
-                    <option value="">Elige una sede</option>
-                  )}
-                  {options.campuses.map((campus) => (
-                    <option key={campus.value} value={campus.value}>
-                      {campus.label}
-                    </option>
-                  ))}
-                </NativeSelect>
-              )}
-            </Field>
-          ) : (
-            <p className="self-end pb-3 text-sm text-muted-foreground">
-              Con este rol en toda la institución. Sus sedes las asigna después su administrador.
-            </p>
-          )}
+          <Field label="Dónde" error={errors.campusId?.message}>
+            {(control) => (
+              <NativeSelect {...control} {...form.register('campusId')}>
+                {options.allowWholeInstitution ? (
+                  <option value="">Toda la institución</option>
+                ) : (
+                  <option value="">Elige una sede</option>
+                )}
+                {options.campuses.map((campus) => (
+                  <option key={campus.value} value={campus.value}>
+                    {campus.label}
+                  </option>
+                ))}
+              </NativeSelect>
+            )}
+          </Field>
         </div>
       </form>
     </DialogContent>

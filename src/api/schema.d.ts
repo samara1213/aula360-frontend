@@ -408,6 +408,75 @@ export interface paths {
         patch: operations["CampusesController_activate"];
         trace?: never;
     };
+    "/api/institutions/{institutionId}/campuses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Listar sedes de una institución */
+        get: operations["InstitutionCampusesController_findAll"];
+        put?: never;
+        /** Crear una sede en una institución */
+        post: operations["InstitutionCampusesController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/institutions/{institutionId}/campuses/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Editar una sede de una institución */
+        patch: operations["InstitutionCampusesController_update"];
+        trace?: never;
+    };
+    "/api/institutions/{institutionId}/campuses/{id}/deactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Desactivar una sede de una institución */
+        patch: operations["InstitutionCampusesController_deactivate"];
+        trace?: never;
+    };
+    "/api/institutions/{institutionId}/campuses/{id}/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Reactivar una sede de una institución */
+        patch: operations["InstitutionCampusesController_activate"];
+        trace?: never;
+    };
     "/api/menu-options/my-menu": {
         parameters: {
             query?: never;
@@ -2449,10 +2518,10 @@ export interface components {
              */
             phone?: string | null;
             /**
-             * @description Tipo de usuario a crear
+             * @description Tipo de usuario a crear. Docentes y estudiantes: POST /teachers y POST /students
              * @enum {string}
              */
-            userType: "INSTITUTION_ADMIN" | "TEACHER" | "STUDENT";
+            userType: "INSTITUTION_ADMIN";
             /**
              * Format: uuid
              * @description Rol global o de la institución (primera asignación)
@@ -5702,6 +5771,427 @@ export interface operations {
                 };
             };
             /** @description Sede no encontrada */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Límite de peticiones superado; la cabecera Retry-After indica cuántos segundos esperar */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Error interno (mensaje genérico, sin detalles) */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    InstitutionCampusesController_findAll: {
+        parameters: {
+            query?: {
+                /** @description Página, desde 1 */
+                page?: number;
+                /** @description Elementos por página */
+                limit?: number;
+                /** @description Texto a buscar */
+                search?: string;
+                /** @description Filtrar por estado activo/inactivo */
+                isActive?: boolean;
+            };
+            header?: never;
+            path: {
+                /** @description UUID de la institución */
+                institutionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CampusPageDto"];
+                };
+            };
+            /** @description Datos inválidos: en errores de validación `message` es la lista de errores */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Sin sesión válida: cookie ausente o vencida, sesión revocada, usuario inactivo o sin acceso a la institución activa. Renovar con POST /api/auth/refresh-token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Solo SUPER_ADMIN. También «Debe cambiar la contraseña» mientras la contraseña sea temporal */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Institución no encontrada */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Límite de peticiones superado; la cabecera Retry-After indica cuántos segundos esperar */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Error interno (mensaje genérico, sin detalles) */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    InstitutionCampusesController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description UUID de la institución */
+                institutionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateCampusDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CampusResponseDto"];
+                };
+            };
+            /** @description Datos inválidos */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Sin sesión válida: cookie ausente o vencida, sesión revocada, usuario inactivo o sin acceso a la institución activa. Renovar con POST /api/auth/refresh-token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Solo SUPER_ADMIN. También «Debe cambiar la contraseña» mientras la contraseña sea temporal */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Institución no encontrada */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Ya existe una sede con ese nombre */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Límite de peticiones superado; la cabecera Retry-After indica cuántos segundos esperar */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Error interno (mensaje genérico, sin detalles) */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    InstitutionCampusesController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description UUID de la institución */
+                institutionId: string;
+                /** @description UUID del recurso. Si no existe o es de otra institución: 404 */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateCampusDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CampusResponseDto"];
+                };
+            };
+            /** @description Datos inválidos */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Sin sesión válida: cookie ausente o vencida, sesión revocada, usuario inactivo o sin acceso a la institución activa. Renovar con POST /api/auth/refresh-token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Solo SUPER_ADMIN. También «Debe cambiar la contraseña» mientras la contraseña sea temporal */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Institución o sede no encontrada */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Ya existe una sede con ese nombre */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Límite de peticiones superado; la cabecera Retry-After indica cuántos segundos esperar */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Error interno (mensaje genérico, sin detalles) */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    InstitutionCampusesController_deactivate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description UUID de la institución */
+                institutionId: string;
+                /** @description UUID del recurso. Si no existe o es de otra institución: 404 */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CampusResponseDto"];
+                };
+            };
+            /** @description Datos inválidos: en errores de validación `message` es la lista de errores */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Sin sesión válida: cookie ausente o vencida, sesión revocada, usuario inactivo o sin acceso a la institución activa. Renovar con POST /api/auth/refresh-token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Solo SUPER_ADMIN. También «Debe cambiar la contraseña» mientras la contraseña sea temporal */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Institución o sede no encontrada */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Límite de peticiones superado; la cabecera Retry-After indica cuántos segundos esperar */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Error interno (mensaje genérico, sin detalles) */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    InstitutionCampusesController_activate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description UUID de la institución */
+                institutionId: string;
+                /** @description UUID del recurso. Si no existe o es de otra institución: 404 */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CampusResponseDto"];
+                };
+            };
+            /** @description Datos inválidos: en errores de validación `message` es la lista de errores */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Sin sesión válida: cookie ausente o vencida, sesión revocada, usuario inactivo o sin acceso a la institución activa. Renovar con POST /api/auth/refresh-token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Solo SUPER_ADMIN. También «Debe cambiar la contraseña» mientras la contraseña sea temporal */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Institución o sede no encontrada */
             404: {
                 headers: {
                     [name: string]: unknown;

@@ -102,6 +102,20 @@ for (const viewport of VIEWPORTS) {
         await expect(page.getByText('Luz Marina Ocampo').filter({ visible: true })).toBeVisible();
         await check(page, info, 'admin-institucion-usuarios');
       });
+
+      test('SUPER_ADMIN: sedes de una institución', async ({ page }, info) => {
+        await setTheme(page, theme);
+        await mockApi(page, SUPER_ADMIN_SESSION);
+        await page.goto(`/admin/institutions/${INSTITUTION_ID}?tab=campuses`);
+        await expect(page.getByRole('tab', { name: 'Sedes' })).toHaveAttribute(
+          'aria-selected',
+          'true',
+        );
+        await expect(
+          page.getByText('Sede Norte — Primaria').filter({ visible: true }),
+        ).toBeVisible();
+        await check(page, info, 'admin-institucion-sedes');
+      });
     });
   }
 }

@@ -1,4 +1,4 @@
-import { Building2, ChevronLeft, Power, PowerOff, ShieldCheck, Users } from 'lucide-react';
+import { Building2, ChevronLeft, MapPin, Power, PowerOff, ShieldCheck, Users } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
@@ -17,6 +17,7 @@ import {
   useSetInstitutionActive,
   useUpdateInstitution,
 } from '@/features/institution/institution-api';
+import { CampusesList } from '@/features/institution/campuses-page';
 import { LogoEditor } from '@/features/institution/institution-logo';
 import { PageHeader } from '@/features/layout/page-header';
 import { NotFoundPage } from '@/features/layout/status-pages';
@@ -27,7 +28,7 @@ import { InstitutionForm } from './institution-form';
 
 /**
  * /admin/institutions/:id (SUPER_ADMIN): pestañas Datos (datos, logo y
- * estado), Usuarios (crear su primer administrador) y Asignaciones. La
+ * estado), Sedes, Usuarios (crear su primer administrador) y Asignaciones. La
  * pestaña va en la URL (`?tab=users`).
  */
 export function InstitutionDetailPage() {
@@ -81,7 +82,10 @@ function InstitutionDetail({ institution }: { institution: Institution }) {
   const { isActive, name } = institution;
   const [params, setParams] = useSearchParams();
   const requested = params.get('tab');
-  const tab = requested === 'users' || requested === 'assignments' ? requested : 'data';
+  const tab =
+    requested === 'campuses' || requested === 'users' || requested === 'assignments'
+      ? requested
+      : 'data';
 
   return (
     <>
@@ -111,6 +115,10 @@ function InstitutionDetail({ institution }: { institution: Institution }) {
           <TabsTrigger value="data">
             <Building2 aria-hidden="true" />
             Datos
+          </TabsTrigger>
+          <TabsTrigger value="campuses">
+            <MapPin aria-hidden="true" />
+            Sedes
           </TabsTrigger>
           <TabsTrigger value="users">
             <Users aria-hidden="true" />
@@ -149,6 +157,9 @@ function InstitutionDetail({ institution }: { institution: Institution }) {
               <LogoEditor institution={institution} mutations={logo} canEdit />
             </Section>
           </div>
+        </TabsContent>
+        <TabsContent value="campuses">
+          <CampusesList scope={{ kind: 'system', institutionId: institution.id }} embedded />
         </TabsContent>
         <TabsContent value="users">
           <p className="mb-6 max-w-prose text-muted-foreground">

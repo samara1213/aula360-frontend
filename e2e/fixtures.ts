@@ -238,7 +238,105 @@ const MENU_TREE = [
   ]),
 ];
 
+export const TEACHER_ID = '2b3c4d5e-6f70-4a8b-9c0d-1e2f3a4b5c6d';
+export const STUDENT_ID = '8c9d0e1f-2a3b-4c5d-8e6f-7a8b9c0d1e2f';
+const profileUser = (
+  id: string,
+  firstName: string,
+  lastName: string,
+  documentType: string,
+  documentNumber: string,
+  email: string | null,
+  isActive = true,
+) => ({
+  id,
+  documentType,
+  documentNumber,
+  firstName,
+  lastName,
+  email,
+  emailVerified: email !== null,
+  phone: null,
+  isActive,
+  mustChangePassword: false,
+  hasAvatar: false,
+});
+const teacher = (
+  id: string,
+  user: ReturnType<typeof profileUser>,
+  academicDegree: string | null,
+  specialty: string | null,
+) => ({ id, institutionId: INSTITUTION_ID, academicDegree, specialty, user, ...stamp });
+const TEACHERS = [
+  teacher(
+    TEACHER_ID,
+    profileUser(
+      't-1',
+      'Laura Cristina',
+      'Gómez Restrepo',
+      'CC',
+      '52123456',
+      'lgomez@colegio.edu.co',
+    ),
+    'Licenciada en Matemáticas',
+    'Álgebra y geometría',
+  ),
+  teacher(
+    '3c4d5e6f-7a8b-4c9d-8e0f-1a2b3c4d5e6f',
+    profileUser('t-2', 'Pedro', 'Vargas', 'CC', '79111222', null),
+    null,
+    'Ciencias naturales',
+  ),
+  teacher(
+    '4d5e6f7a-8b9c-4d0e-9f1a-2b3c4d5e6f7a',
+    profileUser('t-3', 'Ana Milena', 'Torres', 'CE', '998877', 'atorres@colegio.edu.co', false),
+    'Magíster en Educación',
+    null,
+  ),
+];
+const student = (
+  id: string,
+  user: ReturnType<typeof profileUser>,
+  studentCode: string | null,
+  campusName: string | null,
+) => ({
+  id,
+  institutionId: INSTITUTION_ID,
+  studentCode,
+  campus: campusName ? { id: 'c-2', name: campusName, isActive: true } : null,
+  user,
+  ...stamp,
+});
+const STUDENTS = [
+  student(
+    STUDENT_ID,
+    profileUser('s-1', 'Mateo', 'Rojas Castañeda', 'TI', '1012345678', null),
+    '2026-0153',
+    'Sede Norte — Primaria',
+  ),
+  student(
+    '9d0e1f2a-3b4c-4d5e-9f6a-7b8c9d0e1f2b',
+    profileUser('s-2', 'Valentina', 'Ospina', 'RC', '1098765432', null),
+    null,
+    null,
+  ),
+];
+
 const GET_DATA: Record<string, unknown> = {
+  '/api/teachers': page(TEACHERS),
+  [`/api/teachers/${TEACHER_ID}`]: TEACHERS[0],
+  '/api/students': page(STUDENTS),
+  [`/api/students/${STUDENT_ID}`]: {
+    ...STUDENTS[0],
+    guardianName: 'Marta Castañeda',
+    guardianPhone: '+57 300 000 0001',
+    guardianEmail: 'marta.castaneda@correo.com',
+    bloodType: 'O+',
+  },
+  [`/api/institutions/${INSTITUTION_ID}/campuses`]: page([
+    campus('c-1', 'Sede Principal', 'Calle 10 # 5-20', 'Bogotá'),
+    campus('c-2', 'Sede Norte — Primaria', 'Carrera 45 # 170-32', 'Bogotá'),
+  ]),
   '/api/roles': page([
     globalRole(GLOBAL_ROLE_ID, 'INSTITUTION_ADMIN'),
     globalRole('1b0a9c8d-7e6f-4a5b-8c4d-3e2f1a0b9c8d', 'TEACHER'),

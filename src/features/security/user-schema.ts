@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 /** Opcional: vacío se envía como null (así se borra al editar). */
-const optional = (max: number, valid: (value: string) => boolean, message: string) =>
+export const optional = (max: number, valid: (value: string) => boolean, message: string) =>
   z
     .string()
     .trim()
@@ -9,7 +9,7 @@ const optional = (max: number, valid: (value: string) => boolean, message: strin
     .refine((value) => value === '' || valid(value), message)
     .transform((value) => value || null);
 
-const EMAIL = z.email();
+export const EMAIL = z.email();
 
 // Las mismas reglas que UserPersonalDataDto del backend.
 export const personalDataSchema = z.object({

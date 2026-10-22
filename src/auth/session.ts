@@ -72,6 +72,13 @@ export function removeNonSessionQueries(queryClient: QueryClient) {
   };
   void queryClient.cancelQueries(others);
   queryClient.removeQueries(others);
+  // Las mutaciones terminadas guardan lo que se envió y lo que respondió (p. ej.
+  // la ficha de un estudiante): tampoco pasan a la sesión siguiente (B1 de la
+  // 3c). Las que siguen en curso se dejan: las descarta forSameSession.
+  const mutations = queryClient.getMutationCache();
+  for (const mutation of mutations.getAll()) {
+    if (mutation.state.status !== 'pending') mutations.remove(mutation);
+  }
 }
 
 // Las mutaciones con contraseñas no se guardan en la caché de mutaciones

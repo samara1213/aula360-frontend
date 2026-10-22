@@ -1,0 +1,112 @@
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { errorMessage } from '@/api/errors';
+import { Alert } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { DialogClose, DialogContent } from '@/components/ui/dialog';
+import { CreatedAccountContent, type CreatedAccount } from '@/features/security/temporary-password';
+import { PersonalDataFields } from '@/features/security/user-form';
+import { useCampusChoices } from './campus-choices';
+import { useCreateStudent } from './people-api';
+import { CampusSelect, StudentProfileFields } from './person-fields';
+import {
+  emptyStudent,
+  studentSchema,
+  type StudentInput,
+  type StudentValues,
+} from './person-schema';
+
+const FORM_ID = 'create-student-form';
+
+/**
+ * Nuevo estudiante: crea su usuario, su rol de estudiante en la sede y su
+ * ficha. Al terminar muestra la contraseña temporal (una sola vez). Va dentro
+ * de un <Dialog>.
+ */
+export function CreateStudentDialog({ onDone }: { onDone: (createdId?: string) => void }) {
+  const create = useCreateStudent();
+  const campuses = useCampusChoices('people.students');
+  const [created, setCreated] = useState<CreatedAccount | null>(null);
+  const form = useForm<StudentInput, unknown, StudentValues>({
+    resolver: zodResolver(studentSchema),
+    defaultValues: emptyStudent,
+  });
+  const { errors } = form.formState;
+
+  if (created) {
+    return (
+      <CreatedAccountContent
+        title="Estudiante creado"
+        created={created}
+        discard={() => {
+          create.reset();
+        }}
+        onDone={() => {
+          onDone(created.id);
+        }}
+      />
+    );
+  }
+
+  const onSubmit = form.handleSubmit((values) => {
+    if (!campuses.allowNone && !values.campusId) {
+      form.setError('campusId', { message: 'Elige la sede: solo puedes crear en tus sedes.' });
+      return;
+    }
+    create.mutate(
+      { ...values, campusId: values.campusId || null },
+      {
+        onSuccess: (student) => {
+          const name = `${student.user.firstName} ${student.user.lastName}`;
+          toast.success(`Estudiante ${name} creado.`);
+          setCreated({
+            id: student.id,
+            name,
+            password: student.temporaryPassword,
+            emailed: typeof student.user.email === 'string',
+          });
+        },
+      },
+    );
+  });
+
+  return (
+    <DialogContent
+      title="Nuevo estudiante"
+      description="Recibe una contraseña temporal que debe cambiar al entrar. La matrícula en un curso se hace después."
+      className="sm:w-[min(92vw,680px)]"
+      footer={
+        <>
+          <DialogClose asChild>
+            <Button variant="outline">Cancelar</Button>
+          </DialogClose>
+          <Button type="submit" form={FORM_ID} disabled={create.isPending || campuses.isPending}>
+            {create.isPending ? 'Creando…' : 'Crear estudiante'}
+          </Button>
+        </>
+      }
+    >
+      <form
+        id={FORM_ID}
+        noValidate
+        onSubmit={(e) => void onSubmit(e)}
+        className="flex flex-col gap-5"
+      >
+        {create.isError && <Alert variant="error">{errorMessage(create.error)}</Alert>}
+        {campuses.isError && (
+          <Alert variant="error">No pudimos cargar las sedes. Cierra y vuelve a intentarlo.</Alert>
+        )}
+        <PersonalDataFields register={form.register} errors={errors} />
+        <CampusSelect
+          {...form.register('campusId')}
+          choices={campuses}
+          noneLabel="Sin sede"
+          error={errors.campusId?.message}
+        />
+        <StudentProfileFields register={form.register} errors={errors} />
+      </form>
+    </DialogContent>
+  );
+}

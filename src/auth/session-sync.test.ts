@@ -29,6 +29,30 @@ describe('sincronización de la sesión (M2)', () => {
     expect(queryClient.getQueryData(['menu', 'mine', 'inst-1'])).toBeUndefined();
   });
 
+  it('si cambia la cuenta, borra las mutaciones terminadas y deja las que siguen en curso (B1 de la 3c)', async () => {
+    const queryClient = setup();
+    const cache = queryClient.getMutationCache();
+    // Una edición ya terminada, con la ficha de un estudiante en su respuesta.
+    const done = cache.build(queryClient, {
+      mutationFn: () => Promise.resolve({ guardianName: 'Marta Rojas' }),
+    });
+    await done.execute(undefined);
+    // Otra todavía en curso.
+    let finish: (value: unknown) => void = () => undefined;
+    const running = cache.build(queryClient, {
+      mutationFn: () => new Promise((resolve) => (finish = resolve)),
+    });
+    void running.execute(undefined);
+    await vi.waitFor(() => {
+      expect(running.state.status).toBe('pending');
+    });
+
+    queryClient.setQueryData(SESSION_KEY, makeSession({ user: { id: 'otro' } }));
+    expect(cache.getAll()).toEqual([running]);
+    expect(JSON.stringify(cache.getAll().map((m) => m.state.data))).not.toContain('Marta');
+    finish(null);
+  });
+
   it('si la sesión es la misma, conserva los datos', () => {
     const queryClient = setup();
     queryClient.setQueryData(SESSION_KEY, makeSession({ user: { firstName: 'Otro nombre' } }));

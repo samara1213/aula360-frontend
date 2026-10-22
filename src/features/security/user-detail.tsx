@@ -1,14 +1,15 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ChevronLeft, KeyRound, Plus, Power, PowerOff, Trash2 } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link } from 'react-router';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { ApiError, errorMessage } from '@/api/errors';
+import { errorMessage } from '@/api/errors';
 import type { ManagedUser, MenuPermissions, UpdateUserBody, UserAssignment } from '@/api/types';
 import { useSession } from '@/auth/session';
 import { ConfirmDialog } from '@/components/confirm-dialog';
+import { DetailPage } from '@/components/detail-page';
 import { Field } from '@/components/form/field';
 import { Section } from '@/components/section';
 import { Alert } from '@/components/ui/alert';
@@ -16,21 +17,17 @@ import { Badge, StatusBadge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogClose, DialogContent } from '@/components/ui/dialog';
 import { NativeSelect } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/features/layout/page-header';
-import { NotFoundPage } from '@/features/layout/status-pages';
 import { usePermissions } from '@/features/menu/menu';
 import { formatDate } from '@/lib/format';
 import { roleLabel, userTypeLabel } from '@/lib/roles';
+import { AccountActions } from './account-actions';
 import { useAssignmentOptions } from './assignment-options';
-import { TemporaryPasswordPanel } from './temporary-password';
 import { PersonalDataFields } from './user-form';
 import { personalDataSchema, type PersonalData } from './user-schema';
 import {
   useCreateAssignment,
   useDeleteAssignment,
-  useResetTemporaryPassword,
-  useSetUserActive,
   useUpdateUser,
   useUser,
   type UsersScope,
@@ -56,63 +53,27 @@ export function UserDetail({
   id: string;
   back: { to: string; label: string };
 }) {
-  const { data: user, isPending, error, refetch } = useUser(scope, id);
+  const query = useUser(scope, id);
   return (
-    <div className="flex flex-col gap-6">
-      <Link
-        to={back.to}
-        className="inline-flex min-h-11 items-center gap-1 self-start rounded-md font-bold text-primary underline-offset-4 outline-none hover:underline focus-visible:ring-4 focus-visible:ring-ring/25"
-      >
-        <ChevronLeft className="size-5" aria-hidden="true" />
-        {back.label}
-      </Link>
-      {!validIds(scope, id) ? (
-        <NotFoundPage />
-      ) : isPending ? (
-        <div className="flex flex-col gap-6" aria-busy="true">
-          <Skeleton className="h-10 w-2/3 max-w-md" />
-          <Skeleton className="h-80 rounded-2xl" />
-        </div>
-      ) : error ? (
-        error instanceof ApiError && (error.status === 404 || error.status === 400) ? (
-          <NotFoundPage />
-        ) : (
-          <Alert variant="error">
-            No pudimos cargar el usuario.{' '}
-            <button
-              type="button"
-              className="cursor-pointer font-bold text-primary underline"
-              onClick={() => void refetch()}
-            >
-              Reintentar
-            </button>
-          </Alert>
-        )
-      ) : (
+    <DetailPage back={back} validId={validIds(scope, id)} query={query} noun="el usuario">
+      {(user) => (
         <UserFile
           key={`${scope.kind === 'system' ? scope.institutionId : 'activa'}:${user.id}`}
           scope={scope}
           user={user}
         />
       )}
-    </div>
+    </DetailPage>
   );
 }
-
-type Confirming = 'status' | 'password' | null;
 
 function UserFile({ scope, user }: { scope: UsersScope; user: ManagedUser }) {
   const { data: session } = useSession();
   const can = useUserPermissions(scope);
   // El backend no deja gestionar la propia cuenta desde aquí (para eso, Mi perfil).
   const isSelf = session?.user.id === user.id;
-  const setActive = useSetUserActive(scope, user.id);
-  const reset = useResetTemporaryPassword(scope, user.id);
-  const [confirming, setConfirming] = useState<Confirming>(null);
   const name = `${user.firstName} ${user.lastName}`;
   const canUpdate = can.update && !isSelf;
-  // Un SUPER_ADMIN recupera su contraseña por correo; desactivarlo sí se puede.
-  const canResetPassword = user.isActive && user.userType !== 'SUPER_ADMIN';
 
   return (
     <>
@@ -130,32 +91,7 @@ function UserFile({ scope, user }: { scope: UsersScope; user: ManagedUser }) {
             </span>
           </span>
         }
-        actions={
-          canUpdate && (
-            <>
-              {canResetPassword && (
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setConfirming('password');
-                  }}
-                >
-                  <KeyRound aria-hidden="true" />
-                  Nueva contraseña temporal
-                </Button>
-              )}
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setConfirming('status');
-                }}
-              >
-                {user.isActive ? <PowerOff aria-hidden="true" /> : <Power aria-hidden="true" />}
-                {user.isActive ? 'Desactivar' : 'Activar'}
-              </Button>
-            </>
-          )
-        }
+        actions={canUpdate && <AccountActions scope={scope} user={user} />}
       />
       {isSelf && (
         <Alert>
@@ -175,79 +111,6 @@ function UserFile({ scope, user }: { scope: UsersScope; user: ManagedUser }) {
         </Section>
         <AssignmentsSection scope={scope} user={user} can={can} isSelf={isSelf} />
       </div>
-
-      <ConfirmDialog
-        open={confirming === 'status'}
-        onOpenChange={(open) => {
-          if (!open) setConfirming(null);
-        }}
-        title={user.isActive ? `¿Desactivar a ${name}?` : `¿Activar a ${name}?`}
-        description={
-          user.isActive
-            ? 'No podrá entrar a Aula360 y se cierran sus sesiones abiertas. Sus datos y sus roles se conservan.'
-            : 'Vuelve a entrar con su contraseña y los roles que tenía.'
-        }
-        confirmLabel={user.isActive ? 'Desactivar usuario' : 'Activar usuario'}
-        pendingLabel={user.isActive ? 'Desactivando…' : 'Activando…'}
-        destructive={user.isActive}
-        pending={setActive.isPending}
-        onConfirm={() => {
-          setActive.mutate(!user.isActive, {
-            onSuccess: () => {
-              toast.success(user.isActive ? `${name} quedó inactivo.` : `${name} quedó activo.`);
-              setConfirming(null);
-            },
-            onError: (err) => toast.error(errorMessage(err)),
-          });
-        }}
-      />
-      <ConfirmDialog
-        open={confirming === 'password'}
-        onOpenChange={(open) => {
-          if (!open) setConfirming(null);
-        }}
-        title={`¿Generar una contraseña temporal para ${name}?`}
-        description="La contraseña actual deja de servir y se cierran sus sesiones abiertas. Deberá cambiar la nueva al entrar."
-        confirmLabel="Generar contraseña"
-        pendingLabel="Generando…"
-        pending={reset.isPending}
-        onConfirm={() => {
-          reset.mutate(undefined, {
-            onSuccess: () => {
-              setConfirming(null);
-            },
-            onError: (err) => toast.error(errorMessage(err)),
-          });
-        }}
-      />
-      <Dialog
-        open={reset.data !== undefined}
-        onOpenChange={(open) => {
-          // Cerrar descarta la contraseña: no se puede volver a ver.
-          if (!open) reset.reset();
-        }}
-      >
-        {reset.data && (
-          <DialogContent
-            title="Contraseña temporal nueva"
-            footer={
-              <Button
-                onClick={() => {
-                  reset.reset();
-                }}
-              >
-                Listo
-              </Button>
-            }
-          >
-            <TemporaryPasswordPanel
-              name={name}
-              password={reset.data.temporaryPassword}
-              emailed={user.email !== null}
-            />
-          </DialogContent>
-        )}
-      </Dialog>
     </>
   );
 }
@@ -502,24 +365,20 @@ export function AssignRoleDialog({
             </NativeSelect>
           )}
         </Field>
-        {scope.kind === 'institution' ? (
-          <Field label="Dónde" error={errors.campusId?.message}>
-            {(control) => (
-              <NativeSelect {...control} {...form.register('campusId')}>
-                <option value="">
-                  {options.allowWholeInstitution ? 'Toda la institución' : 'Elige una sede'}
+        <Field label="Dónde" error={errors.campusId?.message}>
+          {(control) => (
+            <NativeSelect {...control} {...form.register('campusId')}>
+              <option value="">
+                {options.allowWholeInstitution ? 'Toda la institución' : 'Elige una sede'}
+              </option>
+              {options.campuses.map((campus) => (
+                <option key={campus.value} value={campus.value}>
+                  {campus.label}
                 </option>
-                {options.campuses.map((campus) => (
-                  <option key={campus.value} value={campus.value}>
-                    {campus.label}
-                  </option>
-                ))}
-              </NativeSelect>
-            )}
-          </Field>
-        ) : (
-          <p className="text-sm text-muted-foreground">En toda la institución.</p>
-        )}
+              ))}
+            </NativeSelect>
+          )}
+        </Field>
       </form>
     </DialogContent>
   );

@@ -9,7 +9,7 @@ import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { DialogClose, DialogContent } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { useCreateCampus, useUpdateCampus } from './institution-api';
+import { useCreateCampus, useUpdateCampus, type CampusScope } from './institution-api';
 
 // Las mismas reglas que CreateCampusDto. Un campo opcional vacío se guarda como null.
 const optional = (max: number) =>
@@ -37,9 +37,17 @@ const FORM_ID = 'campus-form';
  * Contenido del diálogo para crear (sin `campus`) o editar una sede. Va dentro
  * de un <Dialog>; se monta de nuevo cada vez que se abre.
  */
-export function CampusFormDialog({ campus, onDone }: { campus?: Campus; onDone: () => void }) {
-  const create = useCreateCampus();
-  const update = useUpdateCampus();
+export function CampusFormDialog({
+  scope,
+  campus,
+  onDone,
+}: {
+  scope?: CampusScope;
+  campus?: Campus;
+  onDone: () => void;
+}) {
+  const create = useCreateCampus(scope);
+  const update = useUpdateCampus(scope);
   const mutation = campus ? update : create;
   const form = useForm<FormInput, unknown, FormOutput>({
     resolver: zodResolver(schema),

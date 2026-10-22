@@ -14,7 +14,7 @@ import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { PageHeader } from '@/features/layout/page-header';
 import { usePermissions } from '@/features/menu/menu';
 import { CampusFormDialog } from './campus-form-dialog';
-import { useCampuses, useSetCampusActive } from './institution-api';
+import { useCampuses, useSetCampusActive, type CampusScope } from './institution-api';
 
 const COLUMNS: Column<Campus>[] = [
   { key: 'name', header: 'Nombre', cell: (c) => c.name },
@@ -23,17 +23,37 @@ const COLUMNS: Column<Campus>[] = [
   { key: 'status', header: 'Estado', cell: (c) => <StatusBadge active={c.isActive} /> },
 ];
 
+const DESCRIPTION =
+  'Los lugares donde funciona la institución. Una sede inactiva conserva sus datos.';
+
 /** Diálogo abierto: crear, editar una sede, o confirmar su cambio de estado. */
 type Open = { kind: 'create' } | { kind: 'edit' | 'toggle'; campus: Campus } | null;
 
+const ALL = { view: true, create: true, update: true, delete: true };
+
 /** /institution/campuses: sedes de la institución activa. */
 export function CampusesPage() {
+  return <CampusesList scope={{ kind: 'institution' }} />;
+}
+
+/**
+ * Sedes de la institución activa o, para el SUPER_ADMIN, de cualquiera
+ * (pestaña «Sedes» del detalle de la institución, con `embedded`).
+ */
+export function CampusesList({
+  scope,
+  embedded = false,
+}: {
+  scope: CampusScope;
+  embedded?: boolean;
+}) {
   const list = useListParams();
-  const { data, isPending, isFetching, error, refetch } = useCampuses(list.query);
+  const { data, isPending, isFetching, error, refetch } = useCampuses(list.query, { scope });
   // El backend exige alcance de toda la institución para crear, editar y
   // desactivar sedes: un rol limitado a una sede solo las ve.
-  const can = usePermissions('institution.campuses').institutionWide;
-  const setActive = useSetCampusActive();
+  const permissions = usePermissions('institution.campuses').institutionWide;
+  const can = scope.kind === 'system' ? ALL : permissions;
+  const setActive = useSetCampusActive(scope);
   const [open, setOpen] = useState<Open>(null);
   const close = () => {
     setOpen(null);
@@ -41,25 +61,27 @@ export function CampusesPage() {
 
   const filtered = list.search !== '' || list.status !== 'active';
   const canAct = can.update || can.delete;
+  const newButton = can.create && (
+    <Button
+      onClick={() => {
+        setOpen({ kind: 'create' });
+      }}
+    >
+      <Plus aria-hidden="true" />
+      Nueva sede
+    </Button>
+  );
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader
-        title="Sedes"
-        description="Los lugares donde funciona la institución. Una sede inactiva conserva sus datos."
-        actions={
-          can.create && (
-            <Button
-              onClick={() => {
-                setOpen({ kind: 'create' });
-              }}
-            >
-              <Plus aria-hidden="true" />
-              Nueva sede
-            </Button>
-          )
-        }
-      />
+      {embedded ? (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="max-w-prose text-muted-foreground">{DESCRIPTION}</p>
+          {newButton}
+        </div>
+      ) : (
+        <PageHeader title="Sedes" description={DESCRIPTION} actions={newButton} />
+      )}
       <ListToolbar>
         <SearchInput
           label="Buscar"
@@ -147,6 +169,7 @@ export function CampusesPage() {
       >
         {(open?.kind === 'create' || open?.kind === 'edit') && (
           <CampusFormDialog
+            scope={scope}
             key={open.kind === 'edit' ? open.campus.id : 'new'}
             campus={open.kind === 'edit' ? open.campus : undefined}
             onDone={close}

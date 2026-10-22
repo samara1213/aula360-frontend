@@ -48,58 +48,124 @@ export function useCurrentLogo() {
   return { upload, remove };
 }
 
-// ─── Sedes de la institución activa ────────────────────────────────────────
+// ─── Sedes ─────────────────────────────────────────────────────────────────
 
-const campusesKey = (institutionId: string | null | undefined) =>
-  ['campuses', institutionId] as const;
+/**
+ * Sedes de la institución activa (`/campuses`) o de una institución cualquiera
+ * para el SUPER_ADMIN (`/institutions/:id/campuses`).
+ */
+export type CampusScope = { kind: 'institution' } | { kind: 'system'; institutionId: string };
 
-export function useCampuses(query: ListQuery, { enabled = true }: { enabled?: boolean } = {}) {
+const ACTIVE: CampusScope = { kind: 'institution' };
+
+/** Con la institución en la clave: las sedes de una nunca se leen con otra. */
+function useCampusesKey(scope: CampusScope) {
   const { data: session } = useSession();
-  const active = session?.activeInstitutionId;
+  return scope.kind === 'system'
+    ? (['admin', 'campuses', scope.institutionId] as const)
+    : (['campuses', session?.activeInstitutionId] as const);
+}
+
+export function useCampuses(
+  query: ListQuery,
+  { enabled = true, scope = ACTIVE }: { enabled?: boolean; scope?: CampusScope } = {},
+) {
+  const { data: session } = useSession();
+  const key = useCampusesKey(scope);
+  const ready = scope.kind === 'system' || typeof session?.activeInstitutionId === 'string';
   return useQuery({
-    queryKey: [...campusesKey(active), query],
-    queryFn: () => unwrap(api.GET('/api/campuses', { params: { query } })),
-    enabled: enabled && typeof active === 'string',
+    queryKey: [...key, query],
+    queryFn: () =>
+      unwrap(
+        scope.kind === 'system'
+          ? api.GET('/api/institutions/{institutionId}/campuses', {
+              params: { path: { institutionId: scope.institutionId }, query },
+            })
+          : api.GET('/api/campuses', { params: { query } }),
+      ),
+    enabled: enabled && ready,
     // Los datos anteriores mientras carga otra página, solo de la misma
     // institución (B4 de 3b-1): nunca las sedes de otra como marcador.
     placeholderData: (previous, previousQuery) =>
-      previousQuery?.queryKey[1] === active ? previous : undefined,
+      key.every((part, index) => previousQuery?.queryKey[index] === part) ? previous : undefined,
   });
 }
+
+/**
+ * Una sede nueva, editada o desactivada cambia lo que muestran sus selectores y
+ * los usuarios y personas con rol en ella: se recarga todo, en los dos alcances
+ * (el SUPER_ADMIN puede estar editando su propia institución activa). B4 de la 3c.
+ */
+const CAMPUS_DEPENDENTS = [
+  ['campuses'],
+  ['admin', 'campuses'],
+  ['users'],
+  ['admin', 'institution-users'],
+  ['role-assignments'],
+  ['admin', 'role-assignments'],
+  ['people'],
+] as const;
 
 function useInvalidateCampuses() {
   const queryClient = useQueryClient();
-  const { data: session } = useSession();
   return () =>
-    queryClient.invalidateQueries({ queryKey: campusesKey(session?.activeInstitutionId) });
+    Promise.all(CAMPUS_DEPENDENTS.map((queryKey) => queryClient.invalidateQueries({ queryKey })));
 }
 
-export function useCreateCampus() {
+export function useCreateCampus(scope: CampusScope = ACTIVE) {
   const invalidate = useInvalidateCampuses();
   return useMutation({
-    mutationFn: (body: CreateCampusBody) => unwrap(api.POST('/api/campuses', { body })),
+    mutationFn: (body: CreateCampusBody) =>
+      unwrap(
+        scope.kind === 'system'
+          ? api.POST('/api/institutions/{institutionId}/campuses', {
+              params: { path: { institutionId: scope.institutionId } },
+              body,
+            })
+          : api.POST('/api/campuses', { body }),
+      ),
     onSuccess: invalidate,
   });
 }
 
-export function useUpdateCampus() {
+export function useUpdateCampus(scope: CampusScope = ACTIVE) {
   const invalidate = useInvalidateCampuses();
   return useMutation({
     mutationFn: ({ id, body }: { id: string; body: UpdateCampusBody }) =>
-      unwrap(api.PATCH('/api/campuses/{id}', { params: { path: { id } }, body })),
+      unwrap(
+        scope.kind === 'system'
+          ? api.PATCH('/api/institutions/{institutionId}/campuses/{id}', {
+              params: { path: { institutionId: scope.institutionId, id } },
+              body,
+            })
+          : api.PATCH('/api/campuses/{id}', { params: { path: { id } }, body }),
+      ),
     onSuccess: invalidate,
   });
 }
 
-export function useSetCampusActive() {
+export function useSetCampusActive(scope: CampusScope = ACTIVE) {
   const invalidate = useInvalidateCampuses();
   return useMutation({
-    mutationFn: ({ id, active }: { id: string; active: boolean }) =>
-      unwrap(
+    mutationFn: ({ id, active }: { id: string; active: boolean }) => {
+      if (scope.kind === 'system') {
+        const path = { institutionId: scope.institutionId, id };
+        return unwrap(
+          active
+            ? api.PATCH('/api/institutions/{institutionId}/campuses/{id}/activate', {
+                params: { path },
+              })
+            : api.PATCH('/api/institutions/{institutionId}/campuses/{id}/deactivate', {
+                params: { path },
+              }),
+        );
+      }
+      return unwrap(
         active
           ? api.PATCH('/api/campuses/{id}/activate', { params: { path: { id } } })
           : api.PATCH('/api/campuses/{id}/deactivate', { params: { path: { id } } }),
-      ),
+      );
+    },
     onSuccess: invalidate,
   });
 }

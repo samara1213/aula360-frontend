@@ -2,6 +2,7 @@ import { Copy, KeyRound } from 'lucide-react';
 import { toast } from 'sonner';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { DialogContent } from '@/components/ui/dialog';
 
 /**
  * La contraseña temporal recién generada. Se muestra solo aquí: no se guarda
@@ -52,5 +53,48 @@ export function TemporaryPasswordPanel({
         después copia otra cosa: el portapapeles (y su historial) la guarda.
       </Alert>
     </div>
+  );
+}
+
+/** La cuenta recién creada, mientras su diálogo está abierto. */
+export type CreatedAccount = { id: string; name: string; password: string; emailed: boolean };
+
+/**
+ * Contenido del diálogo después de crear una cuenta: su contraseña temporal,
+ * una sola vez. `discard` borra la contraseña de la memoria de la mutación
+ * (al cerrar de cualquier forma); `onDone` corre con «Listo».
+ */
+export function CreatedAccountContent({
+  title,
+  created,
+  discard,
+  onDone,
+}: {
+  title: string;
+  created: CreatedAccount;
+  discard: () => void;
+  onDone: () => void;
+}) {
+  return (
+    <DialogContent
+      title={title}
+      onCloseAutoFocus={discard}
+      footer={
+        <Button
+          onClick={() => {
+            discard();
+            onDone();
+          }}
+        >
+          Listo
+        </Button>
+      }
+    >
+      <TemporaryPasswordPanel
+        name={created.name}
+        password={created.password}
+        emailed={created.emailed}
+      />
+    </DialogContent>
   );
 }

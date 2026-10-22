@@ -1,4 +1,12 @@
-import type { Campus, Institution, ManagedUser, MenuOptionNode, RoleDetail } from '@/api/types';
+import type {
+  Campus,
+  Institution,
+  ManagedUser,
+  MenuOptionNode,
+  RoleDetail,
+  Student,
+  Teacher,
+} from '@/api/types';
 
 export const institution = (overrides: Partial<Institution> = {}): Institution => ({
   id: 'inst-1',
@@ -75,5 +83,53 @@ export const menuOption = (
   isActive: true,
   createdAt: '2026-01-01T00:00:00Z',
   children: children.map((child) => ({ ...child, parentId: id })),
+  ...overrides,
+});
+
+export const teacher = (overrides: Partial<Teacher> = {}): Teacher => ({
+  id: '2b3c4d5e-6f70-4a8b-9c0d-1e2f3a4b5c6d',
+  institutionId: 'inst-1',
+  academicDegree: 'Licenciada en Matemáticas',
+  specialty: 'Álgebra',
+  user: {
+    id: '5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b',
+    documentType: 'CC',
+    documentNumber: '52123456',
+    firstName: 'Laura',
+    lastName: 'Gómez',
+    email: 'laura@colegio.edu.co',
+    emailVerified: true,
+    phone: null,
+    isActive: true,
+    mustChangePassword: false,
+    hasAvatar: false,
+  },
+  createdAt: '2026-01-01T00:00:00Z',
+  ...overrides,
+});
+
+/** Por defecto, visto por quien puede editarlo (con documento, contacto y acudiente). */
+export const student = (overrides: Partial<Student> = {}): Student => ({
+  id: '8c9d0e1f-2a3b-4c5d-8e6f-7a8b9c0d1e2f',
+  institutionId: 'inst-1',
+  studentCode: '2026-0153',
+  campus: { id: '6c5b4a3d-2e1f-4a0b-9c8d-7e6f5a4b3c2d', name: 'Sede Norte', isActive: true },
+  user: {
+    id: '9d0e1f2a-3b4c-4d5e-9f6a-7b8c9d0e1f2a',
+    firstName: 'Mateo',
+    lastName: 'Rojas',
+    isActive: true,
+    hasAvatar: false,
+    documentType: 'TI',
+    documentNumber: '1012345678',
+    email: null,
+    phone: null,
+    mustChangePassword: false,
+  },
+  guardianName: 'Marta Rojas',
+  guardianPhone: '+57 300 000 0001',
+  guardianEmail: null,
+  bloodType: 'O+',
+  createdAt: '2026-01-01T00:00:00Z',
   ...overrides,
 });

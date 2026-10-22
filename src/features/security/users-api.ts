@@ -106,6 +106,8 @@ export function useCreateUser(scope: UsersScope) {
 export function useUpdateUser(scope: UsersScope, id: string) {
   const store = useStoreUser(scope);
   return useMutation({
+    // Lleva datos personales: no queda en la caché de mutaciones.
+    gcTime: 0,
     mutationFn: (body: UpdateUserBody) =>
       unwrap(
         scope.kind === 'system'

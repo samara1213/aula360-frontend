@@ -175,26 +175,62 @@ describe('usuarios de la institución', () => {
     expect(calls.status).toEqual([{ isActive: false }]);
   });
 
-  it('con el permiso limitado a una sede: exige la sede y no ofrece administradores', async () => {
+  it('con el permiso limitado a una sede: no crea administrativos y asigna roles solo en sus sedes', async () => {
     mockSignedIn(makeSession(), securityMenu(FULL, { siteOnly: true }));
     const calls = mockUsers();
     const user = userEvent.setup();
-    renderApp('/security/users');
+    const { router } = renderApp('/security/users');
 
-    await user.click(await screen.findByRole('button', { name: 'Nuevo usuario' }));
-    const dialog = await screen.findByRole('dialog', { name: 'Nuevo usuario' });
-    expect(within(dialog).getByRole('option', { name: 'Administrativo' })).toBeDisabled();
+    expect((await screen.findAllByText('Carlos Ruiz')).length).toBeGreaterThan(0);
+    expect(screen.queryByRole('button', { name: 'Nuevo usuario' })).toBeNull();
+
+    await router.navigate(`/security/users/${USER_ID}`);
+    await user.click(await screen.findByRole('button', { name: 'Asignar rol' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Asignar rol' });
     expect(within(dialog).queryByRole('option', { name: 'Toda la institución' })).toBeNull();
-    await user.selectOptions(within(dialog).getByLabelText('Tipo de usuario'), 'TEACHER');
-    await user.type(within(dialog).getByLabelText('Número de documento'), '123');
-    await user.type(within(dialog).getByLabelText('Nombres'), 'Ana');
-    await user.type(within(dialog).getByLabelText('Apellidos'), 'Gil');
     await user.selectOptions(within(dialog).getByLabelText('Rol'), ROLE_ID);
-    await user.click(within(dialog).getByRole('button', { name: 'Crear usuario' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Asignar rol' }));
     expect(
       await within(dialog).findByText('Elige la sede: solo puedes asignar roles en tus sedes.'),
     ).toBeInTheDocument();
-    expect(calls.created).toHaveLength(0);
+    expect(calls.assigned).toHaveLength(0);
+  });
+
+  it('«Nuevo usuario» crea solo personal administrativo', async () => {
+    mockSignedIn(makeSession(), securityMenu());
+    mockUsers();
+    const global = (name: string, id: string) =>
+      role({ id, name, isGlobal: true, institutionId: null });
+    server.use(
+      http.get(apiUrl('/api/roles'), () =>
+        HttpResponse.json(
+          page([
+            global('INSTITUTION_ADMIN', '0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d'),
+            global('TEACHER', '1b0a9c8d-7e6f-4a5b-8c4d-3e2f1a0b9c8d'),
+            global('STUDENT', '2c1b0a9d-8e7f-4a6b-9c5d-4e3f2a1b0c9d'),
+            role(),
+          ]),
+        ),
+      ),
+    );
+    const user = userEvent.setup();
+    renderApp('/security/users');
+    await user.click(await screen.findByRole('button', { name: 'Nuevo usuario' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Nuevo usuario' });
+    expect(within(dialog).queryByLabelText('Tipo de usuario')).toBeNull();
+    // Los roles de docente y estudiante van con su ficha: no se ofrecen aquí.
+    const roles = within(dialog).getByLabelText('Rol');
+    expect(
+      await within(roles).findByRole('option', { name: 'Administrador de la institución' }),
+    ).toBeInTheDocument();
+    expect(
+      within(roles).getByRole('option', { name: 'Coordinación académica' }),
+    ).toBeInTheDocument();
+    expect(within(roles).queryByRole('option', { name: 'Docente' })).toBeNull();
+    expect(within(roles).queryByRole('option', { name: 'Estudiante' })).toBeNull();
+    expect(
+      within(dialog).getByText(/Los docentes y estudiantes se crean desde Personas/),
+    ).toBeInTheDocument();
   });
 
   /** Abre la ficha y genera una contraseña temporal; devuelve el diálogo que la muestra. */

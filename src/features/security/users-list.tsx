@@ -108,7 +108,7 @@ export function UsersList({
 
   return (
     <div className="flex flex-col gap-6">
-      {canCreate && (
+      {canCreate && options.canCreateAdmins && (
         <div className="flex justify-end">
           <Button
             onClick={() => {
@@ -153,7 +153,7 @@ export function UsersList({
             ))}
           </NativeSelect>
         </div>
-        {scope.kind === 'institution' && options.campuses.length > 0 && (
+        {options.campuses.length > 0 && (
           <div className="flex flex-col gap-2 sm:w-52">
             <Label htmlFor={campusSelect}>Sede</Label>
             <NativeSelect

@@ -291,6 +291,7 @@ function AssignFound({
   const options = useAssignmentOptions(scope);
   const create = useCreateAssignment(scope);
   const [roleId, setRoleId] = useState('');
+  const [campusId, setCampusId] = useState('');
   const [missingRole, setMissingRole] = useState(false);
   const name = `${user.firstName} ${user.lastName}`;
 
@@ -326,6 +327,24 @@ function AssignFound({
           </NativeSelect>
         )}
       </Field>
+      <Field label="Dónde">
+        {(control) => (
+          <NativeSelect
+            {...control}
+            value={campusId}
+            onChange={(e) => {
+              setCampusId(e.target.value);
+            }}
+          >
+            <option value="">Toda la institución</option>
+            {options.campuses.map((campus) => (
+              <option key={campus.value} value={campus.value}>
+                {campus.label}
+              </option>
+            ))}
+          </NativeSelect>
+        )}
+      </Field>
       <Button
         className="self-start"
         disabled={create.isPending}
@@ -335,7 +354,7 @@ function AssignFound({
             return;
           }
           create.mutate(
-            { userId: user.id, roleId, campusId: null },
+            { userId: user.id, roleId, campusId: campusId || null },
             {
               onSuccess: () => {
                 toast.success(`Rol asignado a ${name}.`);

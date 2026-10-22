@@ -15,6 +15,8 @@ import { ProfilePage } from '@/features/profile/profile-page';
 
 // Las pantallas de seguridad (roles, menús y usuarios) van juntas en un archivo diferido.
 const security = () => import('@/features/security/security-routes');
+// Docentes y estudiantes, en otro.
+const people = () => import('@/features/people/people-routes');
 
 export const routes: RouteObject[] = [
   {
@@ -141,6 +143,34 @@ export const routes: RouteObject[] = [
                   {
                     path: ':id',
                     lazy: async () => ({ Component: (await security()).UserRoute }),
+                  },
+                ],
+              },
+              {
+                path: '/people/teachers',
+                element: <RequireMenuView slug="people.teachers" />,
+                children: [
+                  {
+                    index: true,
+                    lazy: async () => ({ Component: (await people()).TeachersRoute }),
+                  },
+                  {
+                    path: ':id',
+                    lazy: async () => ({ Component: (await people()).TeacherRoute }),
+                  },
+                ],
+              },
+              {
+                path: '/people/students',
+                element: <RequireMenuView slug="people.students" />,
+                children: [
+                  {
+                    index: true,
+                    lazy: async () => ({ Component: (await people()).StudentsRoute }),
+                  },
+                  {
+                    path: ':id',
+                    lazy: async () => ({ Component: (await people()).StudentRoute }),
                   },
                 ],
               },

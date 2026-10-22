@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import type { ManagedUser } from '@/api/types';
 import { SESSION_KEY } from '@/auth/session';
 import { apiError, apiUrl, mockSignedIn, page, superAdminSession } from '@/test/api';
-import { institution, managedUser, role } from '@/test/fixtures';
+import { campus, institution, managedUser, role } from '@/test/fixtures';
 import { renderApp } from '@/test/render';
 import { server } from '@/test/server';
 
@@ -18,11 +18,18 @@ const ADMIN_ROLE = role({
   institutionId: null,
 });
 const PASSWORD = 'Primera-7Lm!x2';
+const CAMPUS_ID = '6c5b4a3d-2e1f-4a0b-9c8d-7e6f5a4b3c2d';
 
 /** Institución del SUPER_ADMIN con sus usuarios y asignaciones. */
 function mockInstitution() {
-  const calls = { created: [] as unknown[], assigned: [] as unknown[], lookups: [] as string[] };
+  const calls = {
+    created: [] as unknown[],
+    assigned: [] as unknown[],
+    lookups: [] as string[],
+    campuses: [] as unknown[],
+  };
   let users: ManagedUser[] = [];
+  let campuses = [campus({ id: CAMPUS_ID, name: 'Sede Norte', institutionId: ID })];
   server.use(
     http.get(apiUrl('/api/institutions/:id'), () => HttpResponse.json(institution({ id: ID }))),
     http.get(apiUrl('/api/global-roles'), () => HttpResponse.json(page([ADMIN_ROLE]))),
@@ -37,6 +44,18 @@ function mockInstitution() {
       const created = managedUser({ ...body, id: NEW_ID, mustChangePassword: true });
       users = [created];
       return HttpResponse.json({ ...created, temporaryPassword: PASSWORD }, { status: 201 });
+    }),
+    http.get(apiUrl('/api/institutions/:id/campuses'), () => HttpResponse.json(page(campuses))),
+    http.post(apiUrl('/api/institutions/:id/campuses'), async ({ request }) => {
+      const body = (await request.json()) as { name: string };
+      calls.campuses.push(body);
+      campuses = [...campuses, campus({ id: NEW_ID, name: body.name, institutionId: ID })];
+      return HttpResponse.json(campuses.at(-1), { status: 201 });
+    }),
+    http.patch(apiUrl('/api/institutions/:id/campuses/:campusId/deactivate'), ({ params }) => {
+      calls.campuses.push({ deactivated: params.campusId });
+      campuses = campuses.map((c) => (c.id === params.campusId ? { ...c, isActive: false } : c));
+      return HttpResponse.json(campuses.find((c) => c.id === params.campusId));
     }),
     http.get(apiUrl('/api/institutions/:id/role-assignments'), () => HttpResponse.json(page([]))),
     http.post(apiUrl('/api/institutions/:id/role-assignments'), async ({ request }) => {
@@ -73,7 +92,8 @@ describe('detalle de institución (SUPER_ADMIN): pestañas', () => {
     expect(await screen.findByText('Todavía no hay usuarios.')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Nuevo usuario' }));
     const dialog = await screen.findByRole('dialog', { name: 'Nuevo usuario' });
-    expect(within(dialog).queryByLabelText('Dónde')).toBeNull();
+    expect(within(dialog).getByLabelText('Dónde')).toHaveValue('');
+    expect(within(dialog).getByRole('option', { name: 'Sede Norte' })).toBeInTheDocument();
     await user.type(within(dialog).getByLabelText('Número de documento'), '80123456');
     await user.type(within(dialog).getByLabelText('Nombres'), 'Rector');
     await user.type(within(dialog).getByLabelText('Apellidos'), 'Nuevo');
@@ -166,9 +186,38 @@ describe('detalle de institución (SUPER_ADMIN): pestañas', () => {
       within(found).getByLabelText('Rol en esta institución'),
       ADMIN_ROLE.id,
     );
+    await user.selectOptions(within(found).getByLabelText('Dónde'), CAMPUS_ID);
     await user.click(within(found).getByRole('button', { name: 'Asignar rol a Marta' }));
     expect(await screen.findByText('Rol asignado a Marta León.')).toBeInTheDocument();
-    expect(calls.assigned).toEqual([{ userId: NEW_ID, roleId: ADMIN_ROLE.id, campusId: null }]);
+    expect(calls.assigned).toEqual([
+      { userId: NEW_ID, roleId: ADMIN_ROLE.id, campusId: CAMPUS_ID },
+    ]);
+  });
+
+  it('gestiona las sedes de la institución desde la pestaña «Sedes»', async () => {
+    mockSignedIn(superAdminSession());
+    const calls = mockInstitution();
+    const user = userEvent.setup();
+    const { router } = renderApp(`/admin/institutions/${ID}`);
+
+    await user.click(await screen.findByRole('tab', { name: 'Sedes' }));
+    expect(router.state.location.search).toBe('?tab=campuses');
+    expect((await screen.findAllByText('Sede Norte')).length).toBeGreaterThan(0);
+
+    await user.click(screen.getByRole('button', { name: 'Nueva sede' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Nueva sede' });
+    await user.type(within(dialog).getByLabelText('Nombre'), 'Sede Sur');
+    await user.click(within(dialog).getByRole('button', { name: 'Crear sede' }));
+    expect(await screen.findByText('«Sede Sur» creada.')).toBeInTheDocument();
+    expect(calls.campuses).toEqual([{ name: 'Sede Sur', address: null, city: null }]);
+
+    const actions = screen.getAllByRole('button', { name: 'Acciones de Sede Norte' });
+    await user.click(actions[0] as HTMLElement);
+    await user.click(await screen.findByRole('menuitem', { name: 'Desactivar' }));
+    const confirm = await screen.findByRole('alertdialog');
+    await user.click(within(confirm).getByRole('button', { name: 'Desactivar sede' }));
+    expect(await screen.findByText('«Sede Norte» quedó inactiva.')).toBeInTheDocument();
+    expect(calls.campuses).toContainEqual({ deactivated: CAMPUS_ID });
   });
 
   it('un id de institución inválido en la ficha de usuario responde «no encontrada»', async () => {
