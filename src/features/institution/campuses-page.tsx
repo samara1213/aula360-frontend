@@ -162,8 +162,8 @@ export function CampusesPage() {
           }}
           title={
             open.campus.isActive
-              ? `¿Desactivar la sede ${open.campus.name}?`
-              : `¿Reactivar la sede ${open.campus.name}?`
+              ? `¿Desactivar «${open.campus.name}»?`
+              : `¿Reactivar «${open.campus.name}»?`
           }
           description={
             open.campus.isActive
@@ -182,8 +182,8 @@ export function CampusesPage() {
                 onSuccess: () => {
                   toast.success(
                     campus.isActive
-                      ? `Sede ${campus.name} desactivada.`
-                      : `Sede ${campus.name} reactivada.`,
+                      ? `«${campus.name}» quedó inactiva.`
+                      : `«${campus.name}» quedó activa.`,
                   );
                   close();
                 },

@@ -10,6 +10,8 @@
  * están diseñados por separado, con contraste AA.
  */
 :root {
+  /* Controles nativos (casillas, selects, barras) según el tema de Aula360, no el del sistema. */
+  color-scheme: light;
   --background: #f5f7fa; /* Papel */
   --foreground: #1a2142; /* Tinta */
   --card: #ffffff; /* Hoja */
@@ -59,6 +61,7 @@
 }
 
 .dark {
+  color-scheme: dark;
   --background: #0f1530; /* Noche */
   --foreground: #e7ebf7;
   --card: #161e3c;

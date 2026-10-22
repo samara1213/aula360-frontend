@@ -1,6 +1,6 @@
-import { ChevronLeft, Power, PowerOff } from 'lucide-react';
+import { Building2, ChevronLeft, Power, PowerOff, ShieldCheck, Users } from 'lucide-react';
 import { useState } from 'react';
-import { Link, useParams } from 'react-router';
+import { Link, useParams, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
 import { ApiError, errorMessage } from '@/api/errors';
 import type { Institution } from '@/api/types';
@@ -10,6 +10,7 @@ import { Alert } from '@/components/ui/alert';
 import { StatusBadge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   useInstitution,
   useInstitutionLogo,
@@ -19,10 +20,16 @@ import {
 import { LogoEditor } from '@/features/institution/institution-logo';
 import { PageHeader } from '@/features/layout/page-header';
 import { NotFoundPage } from '@/features/layout/status-pages';
+import { UsersList } from '@/features/security/users-list';
 import { isUuid } from '@/lib/ids';
+import { InstitutionAssignments } from './institution-assignments';
 import { InstitutionForm } from './institution-form';
 
-/** /admin/institutions/:id: datos, logo y estado de una institución (SUPER_ADMIN). */
+/**
+ * /admin/institutions/:id (SUPER_ADMIN): pestañas Datos (datos, logo y
+ * estado), Usuarios (crear su primer administrador) y Asignaciones. La
+ * pestaña va en la URL (`?tab=users`).
+ */
 export function InstitutionDetailPage() {
   const { id = '' } = useParams();
   const { data: institution, isPending, error, refetch } = useInstitution(id);
@@ -72,6 +79,9 @@ function InstitutionDetail({ institution }: { institution: Institution }) {
   const logo = useInstitutionLogo(institution.id);
   const [confirming, setConfirming] = useState(false);
   const { isActive, name } = institution;
+  const [params, setParams] = useSearchParams();
+  const requested = params.get('tab');
+  const tab = requested === 'users' || requested === 'assignments' ? requested : 'data';
 
   return (
     <>
@@ -90,33 +100,72 @@ function InstitutionDetail({ institution }: { institution: Institution }) {
           </Button>
         }
       />
-      <div className="grid items-start gap-6 xl:grid-cols-[3fr_2fr]">
-        <Section title="Datos generales">
-          <InstitutionForm
-            formId="institution-edit"
-            institution={institution}
-            error={update.error}
-            onSubmit={(_body, changed) => {
-              if (Object.keys(changed).length === 0) {
-                toast.info('No hay cambios para guardar.');
-                return;
-              }
-              update.mutate(changed, { onSuccess: () => toast.success('Cambios guardados.') });
-            }}
+      <Tabs
+        value={tab}
+        onValueChange={(next) => {
+          // Cada pestaña empieza sin los filtros de la otra.
+          setParams(next === 'data' ? {} : { tab: next }, { replace: true });
+        }}
+      >
+        <TabsList aria-label="Secciones de la institución">
+          <TabsTrigger value="data">
+            <Building2 aria-hidden="true" />
+            Datos
+          </TabsTrigger>
+          <TabsTrigger value="users">
+            <Users aria-hidden="true" />
+            Usuarios
+          </TabsTrigger>
+          <TabsTrigger value="assignments">
+            <ShieldCheck aria-hidden="true" />
+            Asignaciones
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="data">
+          <div className="grid items-start gap-6 xl:grid-cols-[3fr_2fr]">
+            <Section title="Datos generales">
+              <InstitutionForm
+                formId="institution-edit"
+                institution={institution}
+                error={update.error}
+                onSubmit={(_body, changed) => {
+                  if (Object.keys(changed).length === 0) {
+                    toast.info('No hay cambios para guardar.');
+                    return;
+                  }
+                  update.mutate(changed, { onSuccess: () => toast.success('Cambios guardados.') });
+                }}
+              />
+              <Button
+                type="submit"
+                form="institution-edit"
+                className="self-start"
+                disabled={update.isPending}
+              >
+                {update.isPending ? 'Guardando…' : 'Guardar cambios'}
+              </Button>
+            </Section>
+            <Section title="Logo" description="Aparece en el encabezado de los boletines.">
+              <LogoEditor institution={institution} mutations={logo} canEdit />
+            </Section>
+          </div>
+        </TabsContent>
+        <TabsContent value="users">
+          <p className="mb-6 max-w-prose text-muted-foreground">
+            Crea aquí su primer administrador: después él crea al resto desde su institución.
+          </p>
+          <UsersList
+            scope={{ kind: 'system', institutionId: institution.id }}
+            detailPath={(userId) =>
+              `/admin/institutions/${encodeURIComponent(institution.id)}/users/${encodeURIComponent(userId)}`
+            }
+            canCreate
           />
-          <Button
-            type="submit"
-            form="institution-edit"
-            className="self-start"
-            disabled={update.isPending}
-          >
-            {update.isPending ? 'Guardando…' : 'Guardar cambios'}
-          </Button>
-        </Section>
-        <Section title="Logo" description="Aparece en el encabezado de los boletines.">
-          <LogoEditor institution={institution} mutations={logo} canEdit />
-        </Section>
-      </div>
+        </TabsContent>
+        <TabsContent value="assignments">
+          <InstitutionAssignments institutionId={institution.id} />
+        </TabsContent>
+      </Tabs>
 
       <ConfirmDialog
         open={confirming}

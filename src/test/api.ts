@@ -83,3 +83,28 @@ export function page<T>(data: T[], page = 1, limit = 20, total = data.length) {
 export function apiError(status: number, message: string) {
   return HttpResponse.json({ statusCode: status, message }, { status });
 }
+
+/**
+ * Grupo «Seguridad» (roles, menús y usuarios). Con `siteOnly`, los permisos
+ * son de un rol limitado a una sede (en toda la institución, ninguno).
+ */
+export function securityMenu(
+  permissions: MenuPermissions = FULL,
+  { siteOnly = false }: { siteOnly?: boolean } = {},
+): MenuNode[] {
+  const wide = siteOnly ? NO_ACCESS : permissions;
+  const leaf = (slug: string, name: string) => menuNode(slug, name, permissions, [], wide);
+  return [
+    menuNode(
+      'security',
+      'Seguridad',
+      permissions,
+      [
+        leaf('security.roles', 'Roles'),
+        leaf('security.menu-options', 'Menús'),
+        leaf('security.users', 'Usuarios'),
+      ],
+      wide,
+    ),
+  ];
+}

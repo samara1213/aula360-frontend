@@ -12,7 +12,7 @@ import { useState } from 'react';
 import { Link, Outlet, useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { errorMessage } from '@/api/errors';
-import { useLogout, useSession, useSwitchInstitution } from '@/auth/session';
+import { sessionIdentity, useLogout, useSession, useSwitchInstitution } from '@/auth/session';
 import { BrandMark, BrandName } from '@/components/brand';
 import { Button } from '@/components/ui/button';
 import {
@@ -49,6 +49,7 @@ function readCollapsed(): boolean {
  * menú lateral fijo que se puede contraer a íconos.
  */
 export function AppLayout() {
+  const { data: session } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(readCollapsed);
 
@@ -159,7 +160,10 @@ export function AppLayout() {
           tabIndex={-1}
           className="mx-auto w-full max-w-[1600px] flex-1 px-4 py-6 outline-none sm:px-6 lg:px-8 lg:py-8"
         >
-          <Outlet />
+          {/* Con otra cuenta u otra institución la página se monta de nuevo: lo que
+              tenga en pantalla (una contraseña temporal, un usuario encontrado)
+              no pasa a la sesión nueva (M1 de la 3b-2). */}
+          <Outlet key={sessionIdentity(session)} />
         </main>
       </div>
     </div>

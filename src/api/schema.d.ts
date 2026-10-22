@@ -685,6 +685,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/users/lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Buscar un usuario activo por correo o documento (SUPER_ADMIN)
+         * @description Coincidencia exacta: email, o documentType y documentNumber. Para asignarle un rol en otra institución.
+         */
+        get: operations["UsersController_lookup"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/users/me/email": {
         parameters: {
             query?: never;
@@ -885,7 +905,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Generar una contraseña temporal nueva */
+        /**
+         * Generar una contraseña temporal nueva
+         * @description No aplica a cuentas SUPER_ADMIN (recuperan por correo).
+         */
         post: operations["InstitutionUsersController_resetTemporaryPassword"];
         delete?: never;
         options?: never;
@@ -2295,6 +2318,23 @@ export interface components {
              * @description Sede activa de la institución (null = toda la institución)
              */
             campusId?: string | null;
+        };
+        UserLookupResponseDto: {
+            /**
+             * Format: uuid
+             * @description Identificador (UUID)
+             */
+            id: string;
+            /** @description Nombres */
+            firstName: string;
+            /** @description Apellidos */
+            lastName: string;
+            /** @example CC */
+            documentType: string;
+            /** @example 1020304050 */
+            documentNumber: string;
+            /** @description Correo electrónico */
+            email: string | null;
         };
         ChangeOwnEmailDto: {
             /**
@@ -7637,6 +7677,86 @@ export interface operations {
             };
         };
     };
+    UsersController_lookup: {
+        parameters: {
+            query?: {
+                /** @description Correo completo (sin distinguir mayúsculas). O el documento. */
+                email?: string;
+                /** @description Tipo de documento (con documentNumber, si no hay email) */
+                documentType?: string;
+                /** @description Número de documento completo (con documentType) */
+                documentNumber?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserLookupResponseDto"];
+                };
+            };
+            /** @description Falta el correo o el documento */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Sin sesión válida: cookie ausente o vencida, sesión revocada, usuario inactivo o sin acceso a la institución activa. Renovar con POST /api/auth/refresh-token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Solo SUPER_ADMIN. También «Debe cambiar la contraseña» mientras la contraseña sea temporal */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description No hay un usuario activo con esos datos */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Límite de peticiones superado; la cabecera Retry-After indica cuántos segundos esperar */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Error interno (mensaje genérico, sin detalles) */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
     UsersController_changeEmail: {
         parameters: {
             query?: never;
@@ -8942,7 +9062,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponseDto"];
                 };
             };
-            /** @description Solo SUPER_ADMIN. También «Debe cambiar la contraseña» mientras la contraseña sea temporal */
+            /** @description El usuario es SUPER_ADMIN. También «Debe cambiar la contraseña» mientras la contraseña sea temporal */
             403: {
                 headers: {
                     [name: string]: unknown;

@@ -53,13 +53,13 @@ export function useCurrentLogo() {
 const campusesKey = (institutionId: string | null | undefined) =>
   ['campuses', institutionId] as const;
 
-export function useCampuses(query: ListQuery) {
+export function useCampuses(query: ListQuery, { enabled = true }: { enabled?: boolean } = {}) {
   const { data: session } = useSession();
   const active = session?.activeInstitutionId;
   return useQuery({
     queryKey: [...campusesKey(active), query],
     queryFn: () => unwrap(api.GET('/api/campuses', { params: { query } })),
-    enabled: typeof active === 'string',
+    enabled: enabled && typeof active === 'string',
     // Los datos anteriores mientras carga otra página, solo de la misma
     // institución (B4 de 3b-1): nunca las sedes de otra como marcador.
     placeholderData: (previous, previousQuery) =>

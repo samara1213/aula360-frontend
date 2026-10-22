@@ -58,6 +58,11 @@ export const MENU = [
   group('institution', 'Institución', 'building', [
     leaf('institution.campuses', 'Sedes', 'map-pin'),
   ]),
+  group('security', 'Seguridad', 'shield', [
+    leaf('security.roles', 'Roles', 'key'),
+    leaf('security.menu-options', 'Menús', 'list-tree'),
+    leaf('security.users', 'Usuarios', 'users'),
+  ]),
   group('people', 'Personas', 'contact', [
     leaf('people.teachers', 'Docentes', 'presentation'),
     leaf('people.students', 'Estudiantes', 'graduation-cap'),
@@ -122,7 +127,141 @@ const page = (data: unknown[]) => ({
 });
 
 /** Respuestas de los GET de las pantallas (la ruta exacta, sin query). */
+export const INSTITUTION_ID = '5c0e7a1e-2b1f-4c3d-8e9f-0a1b2c3d4e01';
+export const ROLE_ID = '3f1d2c4b-5a6e-4f70-8a9b-0c1d2e3f4a5b';
+export const USER_ID = '7a6b5c4d-3e2f-4a1b-9c8d-7e6f5a4b3c2d';
+const GLOBAL_ROLE_ID = '0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d';
+
+const globalRole = (id: string, name: string) => ({
+  id,
+  institutionId: null,
+  isGlobal: true,
+  name,
+  description: null,
+  createdAt: '2026-01-15T10:00:00Z',
+});
+const coordination = {
+  id: ROLE_ID,
+  institutionId: INSTITUTION_ID,
+  isGlobal: false,
+  name: 'Coordinación académica',
+  description: 'Coordina cursos, materias y la carga de los docentes.',
+  createdAt: '2026-02-01T10:00:00Z',
+};
+const grant = (id: string, create: boolean, update: boolean, del: boolean) => ({
+  menuOptionId: id,
+  slug: id,
+  name: id,
+  canCreate: create,
+  canUpdate: update,
+  canDelete: del,
+});
+const assignment = (id: string, name: string, campus: string | null) => ({
+  id: `a-${id}`,
+  role: { id, name, isGlobal: id !== ROLE_ID },
+  campus: campus ? { id: `c-${campus}`, name: campus, isActive: true } : null,
+});
+const user = (
+  id: string,
+  firstName: string,
+  lastName: string,
+  documentNumber: string,
+  email: string | null,
+  assignments: unknown[],
+  isActive = true,
+) => ({
+  id,
+  userType: 'INSTITUTION_ADMIN',
+  documentType: 'CC',
+  documentNumber,
+  firstName,
+  lastName,
+  email,
+  emailVerified: email !== null,
+  hasPendingEmail: false,
+  pendingEmail: null,
+  phone: null,
+  hasAvatar: false,
+  isActive,
+  mustChangePassword: false,
+  lastLoginAt: '2026-10-18T14:30:00Z',
+  assignments,
+  ...stamp,
+});
+const USERS = [
+  user(USER_ID, 'Carlos Andrés', 'Ruiz Mejía', '1020304050', 'carlos.ruiz@colegio.edu.co', [
+    assignment(GLOBAL_ROLE_ID, 'INSTITUTION_ADMIN', null),
+    assignment(ROLE_ID, 'Coordinación académica', 'Sede Norte — Primaria'),
+  ]),
+  user('8b7c6d5e-4f3a-4b2c-9d1e-0f9a8b7c6d5e', 'Luz Marina', 'Ocampo', '52987654', null, [
+    assignment(ROLE_ID, 'Coordinación académica', 'Sede Principal'),
+  ]),
+  user(
+    '9c8d7e6f-5a4b-4c3d-8e2f-1a0b9c8d7e6f',
+    'Jorge',
+    'Patiño Vélez',
+    '79123456',
+    'jpatino@colegio.edu.co',
+    [],
+    false,
+  ),
+];
+const option = (
+  id: string,
+  name: string,
+  icon: string,
+  children: unknown[] = [],
+  isActive = true,
+) => ({
+  id,
+  parentId: null,
+  name,
+  slug: id,
+  icon,
+  displayOrder: 1,
+  isActive,
+  createdAt: '2026-01-15T10:00:00Z',
+  children,
+});
+const MENU_TREE = [
+  option('institution', 'Institución', 'building', [
+    option('institution.campuses', 'Sedes', 'map-pin'),
+  ]),
+  option('security', 'Seguridad', 'shield', [
+    option('security.roles', 'Roles', 'key'),
+    option('security.menu-options', 'Menús', 'list-tree'),
+    option('security.users', 'Usuarios', 'users'),
+  ]),
+  option('academic', 'Académico', 'book-open', [
+    option('academic.courses', 'Cursos', 'school'),
+    option('academic.grades', 'Grados', 'layers', [], false),
+  ]),
+];
+
 const GET_DATA: Record<string, unknown> = {
+  '/api/roles': page([
+    globalRole(GLOBAL_ROLE_ID, 'INSTITUTION_ADMIN'),
+    globalRole('1b0a9c8d-7e6f-4a5b-8c4d-3e2f1a0b9c8d', 'TEACHER'),
+    coordination,
+  ]),
+  [`/api/roles/${ROLE_ID}`]: {
+    ...coordination,
+    permissions: [
+      grant('institution', false, false, false),
+      grant('institution.campuses', false, false, false),
+      grant('security', false, false, false),
+      grant('security.users', true, true, false),
+    ],
+  },
+  '/api/users': page(USERS),
+  [`/api/users/${USER_ID}`]: USERS[0],
+  '/api/menu-options': MENU_TREE,
+  '/api/global-roles': page([
+    globalRole(GLOBAL_ROLE_ID, 'INSTITUTION_ADMIN'),
+    globalRole('1b0a9c8d-7e6f-4a5b-8c4d-3e2f1a0b9c8d', 'TEACHER'),
+  ]),
+  [`/api/institutions/${INSTITUTION_ID}/users`]: page(USERS.slice(0, 2)),
+  [`/api/institutions/${INSTITUTION_ID}/role-assignments`]: page([]),
   '/api/institutions/current': institution(
     '5c0e7a1e-2b1f-4c3d-8e9f-0a1b2c3d4e01',
     'Institución Educativa San José',

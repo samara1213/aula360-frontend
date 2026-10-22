@@ -13,6 +13,9 @@ import { ModulePage, RouteErrorPage } from '@/features/layout/status-pages';
 import { RequireMenuView, RequireSuperAdmin } from '@/features/menu/route-guards';
 import { ProfilePage } from '@/features/profile/profile-page';
 
+// Las pantallas de seguridad (roles, menús y usuarios) van juntas en un archivo diferido.
+const security = () => import('@/features/security/security-routes');
+
 export const routes: RouteObject[] = [
   {
     errorElement: <RouteErrorPage />,
@@ -84,6 +87,60 @@ export const routes: RouteObject[] = [
                       Component: (await import('@/features/admin/institution-detail-page'))
                         .InstitutionDetailPage,
                     }),
+                  },
+                  {
+                    path: 'institutions/:institutionId/users/:id',
+                    lazy: async () => ({ Component: (await security()).InstitutionUserRoute }),
+                  },
+                  {
+                    path: 'global-roles',
+                    lazy: async () => ({ Component: (await security()).GlobalRolesRoute }),
+                  },
+                  {
+                    path: 'global-roles/:id',
+                    lazy: async () => ({ Component: (await security()).GlobalRoleRoute }),
+                  },
+                  {
+                    path: 'menu-options',
+                    lazy: async () => ({ Component: (await security()).AdminMenuOptionsRoute }),
+                  },
+                ],
+              },
+              {
+                path: '/security/roles',
+                element: <RequireMenuView slug="security.roles" />,
+                children: [
+                  {
+                    index: true,
+                    lazy: async () => ({ Component: (await security()).InstitutionRolesRoute }),
+                  },
+                  {
+                    path: ':id',
+                    lazy: async () => ({ Component: (await security()).InstitutionRoleRoute }),
+                  },
+                ],
+              },
+              {
+                path: '/security/menu-options',
+                element: <RequireMenuView slug="security.menu-options" />,
+                children: [
+                  {
+                    index: true,
+                    lazy: async () => ({ Component: (await security()).MenuOptionsRoute }),
+                  },
+                ],
+              },
+              {
+                path: '/security/users',
+                element: <RequireMenuView slug="security.users" />,
+                children: [
+                  {
+                    index: true,
+                    lazy: async () => ({ Component: (await security()).UsersRoute }),
+                  },
+                  {
+                    path: ':id',
+                    lazy: async () => ({ Component: (await security()).UserRoute }),
                   },
                 ],
               },

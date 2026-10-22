@@ -54,7 +54,7 @@ export function CampusFormDialog({ campus, onDone }: { campus?: Campus; onDone: 
   const onSubmit = form.handleSubmit((body) => {
     const options = {
       onSuccess: () => {
-        toast.success(campus ? 'Sede guardada.' : `Sede «${body.name}» creada.`);
+        toast.success(campus ? 'Sede guardada.' : `«${body.name}» creada.`);
         onDone();
       },
     };

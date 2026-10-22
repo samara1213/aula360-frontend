@@ -8,6 +8,16 @@ export function Input({ className, type, ...props }: ComponentProps<'input'>) {
   return <input type={type} data-slot="input" className={cn(inputClasses, className)} {...props} />;
 }
 
+export function Textarea({ className, ...props }: ComponentProps<'textarea'>) {
+  return (
+    <textarea
+      data-slot="textarea"
+      className={cn(inputClasses, 'h-auto min-h-24 resize-y py-3 leading-relaxed', className)}
+      {...props}
+    />
+  );
+}
+
 export function NativeSelect({ className, ...props }: ComponentProps<'select'>) {
   return <select data-slot="select" className={cn(inputClasses, 'pr-8', className)} {...props} />;
 }

@@ -108,7 +108,7 @@ describe('sedes', () => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
     expect(calls.created).toEqual([{ name: 'Sede Norte', address: null, city: null }]);
-    expect(await screen.findByText('Sede «Sede Norte» creada.')).toBeInTheDocument();
+    expect(await screen.findByText('«Sede Norte» creada.')).toBeInTheDocument();
     expect(await screen.findByRole('rowheader', { name: 'Sede Norte' })).toBeInTheDocument();
   });
 
@@ -137,7 +137,7 @@ describe('sedes', () => {
     await user.click(within(table).getByRole('button', { name: 'Acciones de Sede Principal' }));
     await user.click(await screen.findByRole('menuitem', { name: 'Desactivar' }));
     const confirm = await screen.findByRole('alertdialog', {
-      name: '¿Desactivar la sede Sede Principal?',
+      name: '¿Desactivar «Sede Principal»?',
     });
     expect(calls.patched).toHaveLength(0);
     await user.click(within(confirm).getByRole('button', { name: 'Desactivar sede' }));
@@ -146,7 +146,7 @@ describe('sedes', () => {
       expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
     });
     expect(calls.patched).toEqual(['c-1/deactivate']);
-    expect(await screen.findByText('Sede Sede Principal desactivada.')).toBeInTheDocument();
+    expect(await screen.findByText('«Sede Principal» quedó inactiva.')).toBeInTheDocument();
   });
 
   it('solo con permiso de ver: sin «Nueva sede» ni acciones por fila', async () => {
