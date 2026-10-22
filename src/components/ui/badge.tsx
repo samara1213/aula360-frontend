@@ -11,6 +11,10 @@ const badgeVariants = cva(
         neutral: 'bg-muted text-muted-foreground',
         active: 'bg-level-alto text-level-alto-foreground',
         inactive: 'border border-rule bg-card text-muted-foreground',
+        // Un estado que pide atención sin ser un error (matrícula suspendida).
+        caution: 'bg-level-basico text-level-basico-foreground',
+        // Un estado final positivo (matrícula graduada).
+        highlight: 'bg-level-superior text-level-superior-foreground',
       },
     },
     defaultVariants: { variant: 'neutral' },

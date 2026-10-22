@@ -18,6 +18,8 @@ export type PeopleQuery = {
   search?: string;
   isActive?: boolean;
   campusId?: string;
+  /** Solo estudiantes: los matriculados en este curso (3d-2). */
+  courseId?: string;
 };
 
 /** Con la institución en la clave: las personas de una nunca se leen con otra. */
@@ -64,12 +66,12 @@ export function useForgetPerson(kind: 'teachers' | 'students') {
 
 // ─── Docentes ──────────────────────────────────────────────────────────────
 
-export function useTeachers(query: PeopleQuery) {
+export function useTeachers(query: PeopleQuery, { enabled = true }: { enabled?: boolean } = {}) {
   const key = usePeopleKey('teachers');
   return useQuery({
     queryKey: [...key, 'list', query],
     queryFn: () => unwrap(api.GET('/api/teachers', { params: { query } })),
-    enabled: typeof key[2] === 'string',
+    enabled: enabled && typeof key[2] === 'string',
     // Datos anteriores mientras carga otra página, solo de la misma institución.
     placeholderData: (previous, previousQuery) =>
       key.every((part, i) => previousQuery?.queryKey[i] === part) ? previous : undefined,
@@ -108,12 +110,12 @@ export function useUpdateTeacher(id: string) {
 
 // ─── Estudiantes ───────────────────────────────────────────────────────────
 
-export function useStudents(query: PeopleQuery) {
+export function useStudents(query: PeopleQuery, { enabled = true }: { enabled?: boolean } = {}) {
   const key = usePeopleKey('students');
   return useQuery({
     queryKey: [...key, 'list', query],
     queryFn: () => unwrap(api.GET('/api/students', { params: { query } })),
-    enabled: typeof key[2] === 'string',
+    enabled: enabled && typeof key[2] === 'string',
     // Datos anteriores mientras carga otra página, solo de la misma institución.
     placeholderData: (previous, previousQuery) =>
       key.every((part, i) => previousQuery?.queryKey[i] === part) ? previous : undefined,

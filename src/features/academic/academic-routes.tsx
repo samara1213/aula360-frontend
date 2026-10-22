@@ -1,5 +1,8 @@
 import { useParams } from 'react-router';
+import { AssignmentsPage } from './assignments';
 import { CatalogPage } from './catalog';
+import { CourseDetail, CoursesPage } from './courses';
+import { EnrollmentsPage } from './enrollments';
 import { PerformanceLevelsPage } from './performance-levels';
 import { PeriodsPage } from './periods';
 import { YearDetail, YearsPage } from './years';
@@ -29,4 +32,21 @@ export function SubjectsRoute() {
 
 export function PerformanceLevelsRoute() {
   return <PerformanceLevelsPage />;
+}
+
+export function CoursesRoute() {
+  return <CoursesPage />;
+}
+
+export function CourseRoute() {
+  const { id = '' } = useParams();
+  return <CourseDetail id={id} />;
+}
+
+export function AssignmentsRoute() {
+  return <AssignmentsPage />;
+}
+
+export function EnrollmentsRoute() {
+  return <EnrollmentsPage />;
 }

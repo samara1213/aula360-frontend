@@ -230,7 +230,41 @@ export const routes: RouteObject[] = [
                   },
                 ],
               },
-              // Opciones del menú sin pantalla todavía (`academic.courses` → /academic/courses) y 404.
+              {
+                path: '/academic/courses',
+                element: <RequireMenuView slug="academic.courses" />,
+                children: [
+                  {
+                    index: true,
+                    lazy: async () => ({ Component: (await academic()).CoursesRoute }),
+                  },
+                  {
+                    path: ':id',
+                    lazy: async () => ({ Component: (await academic()).CourseRoute }),
+                  },
+                ],
+              },
+              {
+                path: '/academic/teacher-assignments',
+                element: <RequireMenuView slug="academic.teacher-assignments" />,
+                children: [
+                  {
+                    index: true,
+                    lazy: async () => ({ Component: (await academic()).AssignmentsRoute }),
+                  },
+                ],
+              },
+              {
+                path: '/academic/enrollments',
+                element: <RequireMenuView slug="academic.enrollments" />,
+                children: [
+                  {
+                    index: true,
+                    lazy: async () => ({ Component: (await academic()).EnrollmentsRoute }),
+                  },
+                ],
+              },
+              // Opciones del menú sin pantalla todavía (`evaluations.scores` → /evaluations/scores) y 404.
               { path: '/*', element: <ModulePage /> },
             ],
           },

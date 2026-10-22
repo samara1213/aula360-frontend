@@ -1,8 +1,7 @@
-import { useId } from 'react';
 import type { FieldErrors, UseFormRegister } from 'react-hook-form';
+import { SelectFilter } from '@/components/data/list-toolbar';
 import { Field } from '@/components/form/field';
 import { Input, NativeSelect } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import type { useCampusChoices } from './campus-choices';
 import { BLOOD_TYPES, type StudentInput, type TeacherInput } from './person-schema';
 
@@ -151,25 +150,14 @@ export function CampusFilter({
   options: { value: string; label: string }[];
   onChange: (value: string) => void;
 }) {
-  const id = useId();
   if (options.length === 0) return null;
   return (
-    <div className="flex flex-col gap-2 sm:w-52">
-      <Label htmlFor={id}>Sede</Label>
-      <NativeSelect
-        id={id}
-        value={value}
-        onChange={(e) => {
-          onChange(e.target.value);
-        }}
-      >
-        <option value="">Todas</option>
-        {options.map((campus) => (
-          <option key={campus.value} value={campus.value}>
-            {campus.label}
-          </option>
-        ))}
-      </NativeSelect>
-    </div>
+    <SelectFilter
+      label="Sede"
+      value={value}
+      options={options}
+      onChange={onChange}
+      allLabel="Todas"
+    />
   );
 }

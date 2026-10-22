@@ -11,6 +11,9 @@ export default mergeConfig(
       include: ['src/**/*.test.{ts,tsx}'],
       css: false,
       restoreMocks: true,
+      // Las pruebas montan la aplicación completa con muchos pasos de usuario: con
+      // todos los archivos en paralelo, algunas rozaban los 5 s por defecto.
+      testTimeout: 15_000,
     },
   }),
 );

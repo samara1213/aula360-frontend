@@ -127,3 +127,42 @@ export function StatusSelect({
     </div>
   );
 }
+
+/** Filtro de un listado con una lista de opciones; '' es «todos». */
+export function SelectFilter({
+  label,
+  value,
+  options,
+  onChange,
+  allLabel = 'Todos',
+  className = 'sm:w-52',
+}: {
+  label: string;
+  value: string;
+  options: readonly { value: string; label: string }[];
+  onChange: (value: string) => void;
+  /** null: sin opción «todos» (siempre hay uno elegido). */
+  allLabel?: string | null;
+  className?: string;
+}) {
+  const id = useId();
+  return (
+    <div className={cn('flex flex-col gap-2', className)}>
+      <Label htmlFor={id}>{label}</Label>
+      <NativeSelect
+        id={id}
+        value={value}
+        onChange={(e) => {
+          onChange(e.target.value);
+        }}
+      >
+        {allLabel !== null && <option value="">{allLabel}</option>}
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </NativeSelect>
+    </div>
+  );
+}

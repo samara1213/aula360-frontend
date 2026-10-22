@@ -1,4 +1,5 @@
 import { useSearchParams } from 'react-router';
+import { isUuid } from '@/lib/ids';
 
 export const PAGE_SIZE = 20;
 /** Igual que SearchQueryDto del backend. */
@@ -58,4 +59,45 @@ export function useListParams(defaultStatus: StatusFilter = 'active') {
   };
 
   return { page, search, status, update, query };
+}
+
+/**
+ * Filtro por id en la URL (`?campus=`, `?course=`...). Cambiarlo vuelve a la
+ * primera página; solo un UUID llega a la API (`id`).
+ */
+export function useIdParam(name: string) {
+  const [params, setParams] = useSearchParams();
+  const value = params.get(name) ?? '';
+  return {
+    value,
+    id: isUuid(value) ? value : undefined,
+    set: (next: string) => {
+      setParams((prev) => {
+        const updated = new URLSearchParams(prev);
+        if (next) updated.set(name, next);
+        else updated.delete(name);
+        updated.delete('page');
+        return updated;
+      });
+    },
+  };
+}
+
+/**
+ * Un filtro por id solo vale si el id está entre las opciones cargadas: un
+ * enlace con otro id no filtra a escondidas mientras el selector dice
+ * «Todos» (B2 de la 3d-2). Mientras cargan las opciones, `pending`: el
+ * listado espera para no mostrarse primero sin filtrar.
+ */
+export function pickOption(
+  param: { value: string; id?: string },
+  options: readonly { value: string }[],
+  isPending: boolean,
+) {
+  const known = param.id !== undefined && options.some((option) => option.value === param.id);
+  return {
+    id: known ? param.id : undefined,
+    value: known ? param.value : '',
+    pending: param.id !== undefined && isPending,
+  };
 }

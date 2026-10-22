@@ -2,10 +2,16 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, unwrap } from '@/api/client';
 import type {
   CreateAcademicYearBody,
+  CreateCourseBody,
+  CreateEnrollmentBody,
   CreatePeriodBody,
+  CreateTeacherAssignmentBody,
+  EnrollmentStatus,
   PerformanceLevelInput,
   PerformanceLevels,
   UpdateAcademicYearBody,
+  UpdateCourseBody,
+  UpdateEnrollmentBody,
   UpdatePeriodBody,
 } from '@/api/types';
 import { forSameSession, useSession } from '@/auth/session';
@@ -172,7 +178,11 @@ export function useDeletePeriod(yearId: string) {
 export type CatalogKind = 'grades' | 'subjects';
 export type CatalogQuery = { page: number; limit: number; search?: string };
 
-export function useCatalog(kind: CatalogKind, query: CatalogQuery) {
+export function useCatalog(
+  kind: CatalogKind,
+  query: CatalogQuery,
+  { enabled = true }: { enabled?: boolean } = {},
+) {
   const key = [...useAcademicKey(), kind] as const;
   return useQuery({
     queryKey: [...key, 'list', query],
@@ -182,7 +192,7 @@ export function useCatalog(kind: CatalogKind, query: CatalogQuery) {
           ? api.GET('/api/grades', { params: { query } })
           : api.GET('/api/subjects', { params: { query } }),
       ),
-    enabled: typeof key[1] === 'string',
+    enabled: enabled && typeof key[1] === 'string',
     placeholderData: samePrefix(key),
   });
 }
@@ -244,5 +254,231 @@ export function useReplacePerformanceLevels() {
     ...forSameSession(queryClient, (data: PerformanceLevels) => {
       queryClient.setQueryData(key, data);
     }),
+  });
+}
+
+// ─── Cursos ────────────────────────────────────────────────────────────────
+
+export type CourseQuery = {
+  page: number;
+  limit: number;
+  search?: string;
+  academicYearId?: string;
+  gradeId?: string;
+  campusId?: string;
+};
+
+export function useCourses(query: CourseQuery, { enabled = true }: { enabled?: boolean } = {}) {
+  const key = [...useAcademicKey(), 'courses'] as const;
+  return useQuery({
+    queryKey: [...key, 'list', query],
+    queryFn: () => unwrap(api.GET('/api/courses', { params: { query } })),
+    enabled: enabled && typeof key[1] === 'string',
+    placeholderData: samePrefix(key),
+  });
+}
+
+export function useCourse(id: string) {
+  const key = [...useAcademicKey(), 'courses'] as const;
+  return useQuery({
+    queryKey: [...key, 'detail', id],
+    queryFn: () => unwrap(api.GET('/api/courses/{id}', { params: { path: { id } } })),
+    enabled: isUuid(id) && typeof key[1] === 'string',
+  });
+}
+
+/**
+ * Cursos, carga y matrículas se muestran unos dentro de otros (y en la lista
+ * de estudiantes, filtrada por curso): un cambio recarga lo académico y Personas.
+ */
+function useInvalidateAcademicAndPeople() {
+  const queryClient = useQueryClient();
+  const key = useAcademicKey();
+  return () => {
+    void queryClient.invalidateQueries({ queryKey: key });
+    void queryClient.invalidateQueries({ queryKey: ['people'] });
+  };
+}
+
+export function useSaveCourse() {
+  const invalidate = useInvalidateAcademicAndPeople();
+  return useMutation({
+    mutationFn: ({ id, body }: { id?: string; body: CreateCourseBody | UpdateCourseBody }) =>
+      unwrap(
+        id
+          ? api.PATCH('/api/courses/{id}', { params: { path: { id } }, body })
+          : api.POST('/api/courses', { body: body as CreateCourseBody }),
+      ),
+    onSuccess: invalidate,
+  });
+}
+
+/** Como al eliminar un año: la ficha se quita después de salir de ella (`useForgetCourse`). */
+export function useDeleteCourse() {
+  const queryClient = useQueryClient();
+  const key = useAcademicKey();
+  return useMutation({
+    mutationFn: (id: string) =>
+      unwrap(api.DELETE('/api/courses/{id}', { params: { path: { id } } })),
+    onSuccess: (_data, id) => {
+      void queryClient.invalidateQueries({
+        queryKey: key,
+        predicate: (query) => !(query.queryKey[2] === 'courses' && query.queryKey[4] === id),
+      });
+      void queryClient.invalidateQueries({ queryKey: ['people'] });
+    },
+  });
+}
+
+export function useForgetCourse() {
+  const queryClient = useQueryClient();
+  const key = useAcademicKey();
+  return (id: string) => {
+    queryClient.removeQueries({ queryKey: [...key, 'courses', 'detail', id] });
+  };
+}
+
+// ─── Carga académica ───────────────────────────────────────────────────────
+
+export type AssignmentQuery = {
+  page: number;
+  limit: number;
+  courseId?: string;
+  subjectId?: string;
+  teacherId?: string;
+  academicYearId?: string;
+  isActive?: boolean;
+};
+
+export function useTeacherAssignments(
+  query: AssignmentQuery,
+  { enabled = true }: { enabled?: boolean } = {},
+) {
+  const key = [...useAcademicKey(), 'teacher-assignments'] as const;
+  return useQuery({
+    queryKey: [...key, 'list', query],
+    queryFn: () => unwrap(api.GET('/api/teacher-assignments', { params: { query } })),
+    enabled: enabled && typeof key[1] === 'string',
+    placeholderData: samePrefix(key),
+  });
+}
+
+export function useCreateTeacherAssignment() {
+  const invalidate = useInvalidateAcademic();
+  return useMutation({
+    mutationFn: (body: CreateTeacherAssignmentBody) =>
+      unwrap(api.POST('/api/teacher-assignments', { body })),
+    onSuccess: invalidate,
+  });
+}
+
+export function useReplaceTeacher() {
+  const invalidate = useInvalidateAcademic();
+  return useMutation({
+    mutationFn: ({ id, teacherId }: { id: string; teacherId: string }) =>
+      unwrap(
+        api.POST('/api/teacher-assignments/{id}/replace', {
+          params: { path: { id } },
+          body: { teacherId },
+        }),
+      ),
+    onSuccess: invalidate,
+  });
+}
+
+export function useDeactivateAssignment() {
+  const invalidate = useInvalidateAcademic();
+  return useMutation({
+    mutationFn: (id: string) =>
+      unwrap(api.PATCH('/api/teacher-assignments/{id}/deactivate', { params: { path: { id } } })),
+    onSuccess: invalidate,
+  });
+}
+
+export function useDeleteAssignment() {
+  const invalidate = useInvalidateAcademic();
+  return useMutation({
+    mutationFn: (id: string) =>
+      unwrap(api.DELETE('/api/teacher-assignments/{id}', { params: { path: { id } } })),
+    onSuccess: invalidate,
+  });
+}
+
+// ─── Matrículas ────────────────────────────────────────────────────────────
+
+export type EnrollmentQuery = {
+  page: number;
+  limit: number;
+  search?: string;
+  courseId?: string;
+  academicYearId?: string;
+  studentId?: string;
+  status?: EnrollmentStatus;
+};
+
+/** Listados: sin observaciones (el backend solo las da en el detalle). */
+export function useEnrollments(
+  query: EnrollmentQuery,
+  { enabled = true }: { enabled?: boolean } = {},
+) {
+  const key = [...useAcademicKey(), 'enrollments'] as const;
+  return useQuery({
+    queryKey: [...key, 'list', query],
+    queryFn: () => unwrap(api.GET('/api/enrollments', { params: { query } })),
+    enabled: enabled && typeof key[1] === 'string',
+    placeholderData: samePrefix(key),
+  });
+}
+
+/**
+ * Detalle con las observaciones (texto libre sobre un menor): solo mientras el
+ * diálogo de edición está abierto; no queda en la caché al cerrarlo.
+ */
+export function useEnrollment(id: string) {
+  const key = [...useAcademicKey(), 'enrollments'] as const;
+  return useQuery({
+    queryKey: [...key, 'detail', id],
+    queryFn: () => unwrap(api.GET('/api/enrollments/{id}', { params: { path: { id } } })),
+    enabled: isUuid(id) && typeof key[1] === 'string',
+    gcTime: 0,
+  });
+}
+
+/**
+ * Tras crear o editar una matrícula se recarga todo menos su detalle (con
+ * las observaciones): se quita de la caché, así no se vuelve a pedir mientras
+ * se cierra el diálogo (B3 de la 3d-2).
+ */
+function useRefreshAfterEnrollment() {
+  const queryClient = useQueryClient();
+  const key = useAcademicKey();
+  return (enrollment: { id: string }) => {
+    queryClient.removeQueries({ queryKey: [...key, 'enrollments', 'detail', enrollment.id] });
+    void queryClient.invalidateQueries({
+      queryKey: key,
+      predicate: (query) =>
+        !(query.queryKey[2] === 'enrollments' && query.queryKey[3] === 'detail'),
+    });
+    void queryClient.invalidateQueries({ queryKey: ['people'] });
+  };
+}
+
+/** Lleva observaciones sobre un menor: gcTime 0, no quedan en la caché de mutaciones. */
+export function useCreateEnrollment() {
+  const invalidate = useRefreshAfterEnrollment();
+  return useMutation({
+    gcTime: 0,
+    mutationFn: (body: CreateEnrollmentBody) => unwrap(api.POST('/api/enrollments', { body })),
+    onSuccess: invalidate,
+  });
+}
+
+export function useUpdateEnrollment() {
+  const invalidate = useRefreshAfterEnrollment();
+  return useMutation({
+    gcTime: 0,
+    mutationFn: ({ id, body }: { id: string; body: UpdateEnrollmentBody }) =>
+      unwrap(api.PATCH('/api/enrollments/{id}', { params: { path: { id } }, body })),
+    onSuccess: invalidate,
   });
 }

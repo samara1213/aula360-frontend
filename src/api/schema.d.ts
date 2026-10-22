@@ -3320,7 +3320,7 @@ export interface components {
              * @description Fecha de matrícula
              */
             enrollmentDate: string;
-            /** @description Solo en el detalle (no en listados). Texto libre sobre un menor: no registrar datos de salud, disciplinarios ni otros datos sensibles. */
+            /** @description Solo en el detalle (no en listados) y para quien puede editar matrículas en la sede del curso. Texto libre sobre un menor: no registrar datos de salud, disciplinarios ni otros datos sensibles. */
             observations?: string | null;
             student: components["schemas"]["EnrollmentStudentDto"];
             course: components["schemas"]["EnrollmentCourseDto"];

@@ -110,13 +110,18 @@ export function securityMenu(
 }
 
 /**
- * Grupo «Personas» (docentes y estudiantes) y, si se pide, «Seguridad →
+ * Grupo «Personas» (docentes y estudiantes), «Institución → Sedes» (para
+ * elegir la sede; por defecto solo ver) y, si se pide, «Seguridad →
  * Usuarios» (activar, desactivar y contraseña temporal). Con `siteOnly`, los
  * permisos de Personas son de un rol limitado a una sede.
  */
 export function peopleMenu(
   permissions: MenuPermissions = FULL,
-  { siteOnly = false, users = NO_ACCESS }: { siteOnly?: boolean; users?: MenuPermissions } = {},
+  {
+    siteOnly = false,
+    users = NO_ACCESS,
+    campuses = VIEW_ONLY,
+  }: { siteOnly?: boolean; users?: MenuPermissions; campuses?: MenuPermissions } = {},
 ): MenuNode[] {
   const wide = siteOnly ? NO_ACCESS : permissions;
   const leaf = (slug: string, name: string) => menuNode(slug, name, permissions, [], wide);
@@ -129,11 +134,15 @@ export function peopleMenu(
       wide,
     ),
     menuNode('security', 'Seguridad', users, [menuNode('security.users', 'Usuarios', users)]),
+    menuNode('institution', 'Institución', campuses, [
+      menuNode('institution.campuses', 'Sedes', campuses),
+    ]),
   ];
 }
 
 /**
- * Grupo «Académico» (años, periodos, grados, materias y niveles). Con
+ * Grupo «Académico» (años, periodos, grados, materias, niveles, cursos, carga y
+ * matrículas). Con
  * `siteOnly`, los permisos son de un rol limitado a una sede (en toda la
  * institución, ninguno).
  */
@@ -154,6 +163,9 @@ export function academicMenu(
         leaf('academic.grades', 'Grados'),
         leaf('academic.subjects', 'Materias'),
         leaf('academic.performance-levels', 'Niveles de desempeño'),
+        leaf('academic.courses', 'Cursos'),
+        leaf('academic.teacher-assignments', 'Carga académica'),
+        leaf('academic.enrollments', 'Matrículas'),
       ],
       wide,
     ),

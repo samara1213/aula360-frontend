@@ -107,6 +107,7 @@ export function StudentsRoute() {
       useRows={useStudents}
       detailPath={studentPath}
       createDialog={(onDone) => <CreateStudentDialog onDone={onDone} />}
+      filterByCourse
     />
   );
 }

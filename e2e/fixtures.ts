@@ -74,6 +74,8 @@ export const MENU = [
     leaf('academic.courses', 'Cursos', 'school'),
     leaf('academic.subjects', 'Materias', 'book'),
     leaf('academic.performance-levels', 'Niveles de desempeño', 'award'),
+    leaf('academic.teacher-assignments', 'Carga académica', 'clipboard-list'),
+    leaf('academic.enrollments', 'Matrículas', 'user-plus'),
   ]),
   group('evaluations', 'Evaluaciones', 'clipboard-check', [
     leaf('evaluations.scores', 'Notas', 'pencil'),
@@ -352,7 +354,107 @@ const catalogItem = (id: string, name: string) => ({
   createdAt: stamp.createdAt,
 });
 
+export const COURSE_ID = '9b0c1d2e-3f4a-4b5c-8d6e-7f8a9b0c1d2f';
+const year2026 = { id: YEAR_ID, year: 2026, isActive: true };
+const sede = (id: string, name: string) => ({ id, name, isActive: true });
+const academicCourse = (
+  id: string,
+  name: string,
+  grade: string,
+  campusId: string,
+  campusName: string,
+) => ({
+  id,
+  name,
+  grade: { id: `g-${grade}`, name: grade },
+  campus: sede(campusId, campusName),
+  academicYear: year2026,
+  createdAt: stamp.createdAt,
+});
+const COURSES = [
+  academicCourse(COURSE_ID, '601', 'Sexto', 'c-1', 'Sede Principal'),
+  academicCourse('ac0d1e2f-3a4b-4c5d-9e6f-7a8b9c0d1e2f', '602', 'Sexto', 'c-1', 'Sede Principal'),
+  academicCourse(
+    'bd1e2f3a-4b5c-4d6e-8f7a-8b9c0d1e2f3a',
+    'Transición A',
+    'Transición',
+    'c-2',
+    'Sede Norte — Primaria',
+  ),
+];
+const assignmentRow = (
+  id: string,
+  subject: string,
+  firstName: string,
+  lastName: string,
+  isActive = true,
+) => ({
+  id,
+  isActive,
+  course: COURSES[0],
+  subject: { id: `s-${subject}`, name: subject },
+  teacher: { id: `t-${lastName}`, userId: `u-${lastName}`, firstName, lastName },
+  createdAt: '2026-01-26T10:00:00Z',
+  deactivatedAt: isActive ? null : '2026-03-15T10:00:00Z',
+});
+const ASSIGNMENTS = [
+  assignmentRow('as-1', 'Matemáticas', 'Laura Cristina', 'Gómez Restrepo'),
+  assignmentRow('as-2', 'Ciencias naturales y educación ambiental', 'Pedro', 'Vargas'),
+  assignmentRow('as-3', 'Lengua castellana', 'Ana Milena', 'Torres'),
+];
+const enrollmentRow = (
+  id: string,
+  studentId: string,
+  firstName: string,
+  lastName: string,
+  code: string | null,
+  status: string,
+) => ({
+  id,
+  status,
+  enrollmentDate: '2026-01-20T10:00:00Z',
+  student: { id: studentId, studentCode: code, firstName, lastName },
+  course: {
+    id: COURSE_ID,
+    name: '601',
+    grade: { id: 'g-Sexto', name: 'Sexto' },
+    campus: sede('c-1', 'Sede Principal'),
+  },
+  academicYear: year2026,
+});
+const ENROLLMENTS = [
+  enrollmentRow('e-1', STUDENT_ID, 'Mateo', 'Rojas Castañeda', '2026-0153', 'ENROLLED'),
+  enrollmentRow(
+    'e-2',
+    '9d0e1f2a-3b4c-4d5e-9f6a-7b8c9d0e1f2b',
+    'Valentina',
+    'Ospina',
+    null,
+    'SUSPENDED',
+  ),
+  enrollmentRow(
+    'e-3',
+    'f1e2d3c4-b5a6-4978-8a9b-0c1d2e3f4a5b',
+    'Juan José',
+    'Martínez Pérez',
+    '2026-0201',
+    'DROPPED',
+  ),
+  enrollmentRow(
+    'e-4',
+    'a2b3c4d5-e6f7-4a8b-9c0d-1e2f3a4b5c6e',
+    'Sara',
+    'López',
+    '2025-0099',
+    'GRADUATED',
+  ),
+];
+
 const GET_DATA: Record<string, unknown> = {
+  '/api/courses': page(COURSES),
+  [`/api/courses/${COURSE_ID}`]: COURSES[0],
+  '/api/teacher-assignments': page(ASSIGNMENTS),
+  '/api/enrollments': page(ENROLLMENTS),
   '/api/academic-years': page(YEARS),
   [`/api/academic-years/${YEAR_ID}`]: YEARS[1],
   [`/api/academic-years/${YEAR_ID}/periods`]: [
