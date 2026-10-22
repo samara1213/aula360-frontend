@@ -13,3 +13,13 @@ const dateFormat = new Intl.DateTimeFormat('es-CO', { dateStyle: 'medium' });
 export function formatDate(iso: string): string {
   return dateFormat.format(new Date(iso));
 }
+
+/**
+ * Fecha sin hora del backend ('2026-02-02'). Se arma en la hora local: con
+ * `new Date('2026-02-02')` (medianoche UTC) en Colombia saldría el día anterior.
+ */
+export function formatDay(day: string): string {
+  const [year, month, date] = day.split('-').map(Number);
+  if (!year || !month || !date) return day;
+  return dateFormat.format(new Date(year, month - 1, date));
+}

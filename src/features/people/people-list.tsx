@@ -1,7 +1,7 @@
 import type { UseQueryResult } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { useNavigate } from 'react-router';
 import type { PageMeta } from '@/api/types';
 import { DataList, Pagination, type Column } from '@/components/data/data-list';
 import { useListParams } from '@/components/data/list-params';
@@ -15,18 +15,6 @@ import { CampusFilter } from './person-fields';
 import type { PeopleQuery } from './people-api';
 
 const MALE: readonly [string, string] = ['Activos', 'Inactivos'];
-
-/** Enlace a la ficha con el nombre de la persona (primera columna). */
-export function PersonLink({ to, children }: { to: string; children: ReactNode }) {
-  return (
-    <Link
-      to={to}
-      className="rounded-md text-primary underline-offset-4 outline-none hover:underline focus-visible:ring-4 focus-visible:ring-ring/25"
-    >
-      {children}
-    </Link>
-  );
-}
 
 /**
  * Listado de docentes o estudiantes de la institución activa: búsqueda,

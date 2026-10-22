@@ -77,7 +77,7 @@ for (const viewport of VIEWPORTS) {
         await mockApi(page, SESSION);
         await page.goto('/security/menu-options');
         await expect(page.getByRole('heading', { name: 'Menús', exact: true })).toBeVisible();
-        await expect(page.getByText('Grados')).toBeVisible();
+        await expect(page.getByRole('main').getByText('Grados')).toBeVisible();
         await check(page, info, 'menus');
       });
 

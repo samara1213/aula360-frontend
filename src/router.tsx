@@ -17,6 +17,8 @@ import { ProfilePage } from '@/features/profile/profile-page';
 const security = () => import('@/features/security/security-routes');
 // Docentes y estudiantes, en otro.
 const people = () => import('@/features/people/people-routes');
+// Académico, en otro.
+const academic = () => import('@/features/academic/academic-routes');
 
 export const routes: RouteObject[] = [
   {
@@ -174,7 +176,61 @@ export const routes: RouteObject[] = [
                   },
                 ],
               },
-              // Opciones del menú sin pantalla todavía (`academic.periods` → /academic/periods) y 404.
+              {
+                path: '/academic/years',
+                element: <RequireMenuView slug="academic.years" />,
+                children: [
+                  {
+                    index: true,
+                    lazy: async () => ({ Component: (await academic()).YearsRoute }),
+                  },
+                  {
+                    path: ':id',
+                    lazy: async () => ({ Component: (await academic()).YearRoute }),
+                  },
+                ],
+              },
+              {
+                path: '/academic/periods',
+                element: <RequireMenuView slug="academic.periods" />,
+                children: [
+                  {
+                    index: true,
+                    lazy: async () => ({ Component: (await academic()).PeriodsRoute }),
+                  },
+                ],
+              },
+              {
+                path: '/academic/grades',
+                element: <RequireMenuView slug="academic.grades" />,
+                children: [
+                  {
+                    index: true,
+                    lazy: async () => ({ Component: (await academic()).GradesRoute }),
+                  },
+                ],
+              },
+              {
+                path: '/academic/subjects',
+                element: <RequireMenuView slug="academic.subjects" />,
+                children: [
+                  {
+                    index: true,
+                    lazy: async () => ({ Component: (await academic()).SubjectsRoute }),
+                  },
+                ],
+              },
+              {
+                path: '/academic/performance-levels',
+                element: <RequireMenuView slug="academic.performance-levels" />,
+                children: [
+                  {
+                    index: true,
+                    lazy: async () => ({ Component: (await academic()).PerformanceLevelsRoute }),
+                  },
+                ],
+              },
+              // Opciones del menú sin pantalla todavía (`academic.courses` → /academic/courses) y 404.
               { path: '/*', element: <ModulePage /> },
             ],
           },

@@ -70,8 +70,10 @@ export const MENU = [
   group('academic', 'Académico', 'book-open', [
     leaf('academic.years', 'Años lectivos', 'calendar'),
     leaf('academic.periods', 'Periodos', 'calendar-range'),
+    leaf('academic.grades', 'Grados', 'layers'),
     leaf('academic.courses', 'Cursos', 'school'),
     leaf('academic.subjects', 'Materias', 'book'),
+    leaf('academic.performance-levels', 'Niveles de desempeño', 'award'),
   ]),
   group('evaluations', 'Evaluaciones', 'clipboard-check', [
     leaf('evaluations.scores', 'Notas', 'pencil'),
@@ -322,7 +324,63 @@ const STUDENTS = [
   ),
 ];
 
+export const YEAR_ID = '6e7f8a9b-0c1d-4e2f-8a3b-4c5d6e7f8a9b';
+const academicYear = (id: string, year: number, isActive = true) => ({
+  id,
+  institutionId: INSTITUTION_ID,
+  year,
+  isActive,
+  createdAt: stamp.createdAt,
+});
+const YEARS = [
+  academicYear('7f8a9b0c-1d2e-4f3a-9b4c-5d6e7f8a9b0c', 2027, false),
+  academicYear(YEAR_ID, 2026),
+  academicYear('8a9b0c1d-2e3f-4a4b-8c5d-6e7f8a9b0c1d', 2025, false),
+];
+const academicPeriod = (id: string, name: string, startDate: string, endDate: string) => ({
+  id,
+  academicYearId: YEAR_ID,
+  name,
+  startDate,
+  endDate,
+  createdAt: stamp.createdAt,
+});
+const catalogItem = (id: string, name: string) => ({
+  id,
+  institutionId: INSTITUTION_ID,
+  name,
+  createdAt: stamp.createdAt,
+});
+
 const GET_DATA: Record<string, unknown> = {
+  '/api/academic-years': page(YEARS),
+  [`/api/academic-years/${YEAR_ID}`]: YEARS[1],
+  [`/api/academic-years/${YEAR_ID}/periods`]: [
+    academicPeriod('p-1', 'Primer periodo', '2026-01-26', '2026-04-03'),
+    academicPeriod('p-2', 'Segundo periodo', '2026-04-13', '2026-06-19'),
+    academicPeriod('p-3', 'Tercer periodo', '2026-07-06', '2026-09-11'),
+    academicPeriod('p-4', 'Cuarto periodo (recuperaciones y cierre)', '2026-09-14', '2026-11-27'),
+  ],
+  '/api/grades': page([
+    catalogItem('g-1', 'Transición'),
+    catalogItem('g-2', 'Primero'),
+    catalogItem('g-3', 'Sexto'),
+    catalogItem('g-4', 'Undécimo'),
+  ]),
+  '/api/subjects': page([
+    catalogItem('s-1', 'Matemáticas'),
+    catalogItem('s-2', 'Ciencias naturales y educación ambiental'),
+    catalogItem('s-3', 'Lengua castellana'),
+  ]),
+  '/api/performance-levels': {
+    scale: { min: 1, max: 5, passingScore: 3 },
+    levels: [
+      { id: 'l-1', name: 'Bajo', minScore: 1, maxScore: 2.99, displayOrder: 1 },
+      { id: 'l-2', name: 'Básico', minScore: 3, maxScore: 3.99, displayOrder: 2 },
+      { id: 'l-3', name: 'Alto', minScore: 4, maxScore: 4.59, displayOrder: 3 },
+      { id: 'l-4', name: 'Superior', minScore: 4.6, maxScore: 5, displayOrder: 4 },
+    ],
+  },
   '/api/teachers': page(TEACHERS),
   [`/api/teachers/${TEACHER_ID}`]: TEACHERS[0],
   '/api/students': page(STUDENTS),

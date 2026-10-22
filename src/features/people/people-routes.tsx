@@ -1,11 +1,12 @@
 import { useParams } from 'react-router';
 import type { StudentSummary, Teacher } from '@/api/types';
 import type { Column } from '@/components/data/data-list';
+import { RowLink } from '@/components/data/row-link';
 import { StatusBadge } from '@/components/ui/badge';
 import { CreateStudentDialog } from './create-student-dialog';
 import { CreateTeacherDialog } from './create-teacher-dialog';
 import { useStudents, useTeachers } from './people-api';
-import { PeopleList, PersonLink } from './people-list';
+import { PeopleList } from './people-list';
 import { StudentDetail } from './student-detail';
 import { TeacherDetail } from './teacher-detail';
 
@@ -20,9 +21,9 @@ const TEACHER_COLUMNS: Column<Teacher>[] = [
     key: 'name',
     header: 'Nombre',
     cell: (t) => (
-      <PersonLink to={teacherPath(t.id)}>
+      <RowLink to={teacherPath(t.id)}>
         {t.user.firstName} {t.user.lastName}
-      </PersonLink>
+      </RowLink>
     ),
   },
   {
@@ -48,9 +49,9 @@ const STUDENT_COLUMNS: Column<StudentSummary>[] = [
     key: 'name',
     header: 'Nombre',
     cell: (s) => (
-      <PersonLink to={studentPath(s.id)}>
+      <RowLink to={studentPath(s.id)}>
         {s.user.firstName} {s.user.lastName}
-      </PersonLink>
+      </RowLink>
     ),
   },
   { key: 'code', header: 'Código', cell: (s) => s.studentCode ?? '—' },

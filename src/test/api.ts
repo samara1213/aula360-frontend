@@ -131,3 +131,31 @@ export function peopleMenu(
     menuNode('security', 'Seguridad', users, [menuNode('security.users', 'Usuarios', users)]),
   ];
 }
+
+/**
+ * Grupo «Académico» (años, periodos, grados, materias y niveles). Con
+ * `siteOnly`, los permisos son de un rol limitado a una sede (en toda la
+ * institución, ninguno).
+ */
+export function academicMenu(
+  permissions: MenuPermissions = FULL,
+  { siteOnly = false }: { siteOnly?: boolean } = {},
+): MenuNode[] {
+  const wide = siteOnly ? NO_ACCESS : permissions;
+  const leaf = (slug: string, name: string) => menuNode(slug, name, permissions, [], wide);
+  return [
+    menuNode(
+      'academic',
+      'Académico',
+      permissions,
+      [
+        leaf('academic.years', 'Años lectivos'),
+        leaf('academic.periods', 'Periodos'),
+        leaf('academic.grades', 'Grados'),
+        leaf('academic.subjects', 'Materias'),
+        leaf('academic.performance-levels', 'Niveles de desempeño'),
+      ],
+      wide,
+    ),
+  ];
+}
