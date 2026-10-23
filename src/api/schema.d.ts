@@ -1805,6 +1805,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/report-cards/{id}/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * El PDF del boletín
+         * @description El propio estudiante o el administrador de la sede del curso. Se envía con no-store: no queda en la caché del navegador (la URL firmada de Storage sí lo dejaba).
+         */
+        get: operations["ReportCardsController_pdf"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/report-cards/{id}/download": {
         parameters: {
             query?: never;
@@ -3778,7 +3798,7 @@ export interface components {
         GenerateReportCardDto: {
             /**
              * Format: uuid
-             * @description UUID del estudiante (su usuario)
+             * @description UUID del estudiante (su perfil en students, no el del usuario)
              */
             studentId: string;
             /**
@@ -3869,18 +3889,38 @@ export interface components {
         BatchSkippedDto: {
             /**
              * Format: uuid
-             * @description UUID del estudiante (su usuario)
+             * @description UUID del estudiante (su perfil en students, no el del usuario)
              */
             studentId: string;
-            /** @example Faltan definitivas en: Inglés. Use force para... */
+            /**
+             * @description Nombres
+             * @example Mateo
+             */
+            firstName: string;
+            /**
+             * @description Apellidos
+             * @example Rojas
+             */
+            lastName: string;
+            /** @example Faltan definitivas en: Inglés. Se puede generar de todos modos, con esas materias pendientes */
             reason: string;
         };
         BatchFailedDto: {
             /**
              * Format: uuid
-             * @description UUID del estudiante (su usuario)
+             * @description UUID del estudiante (su perfil en students, no el del usuario)
              */
             studentId: string;
+            /**
+             * @description Sin nombre si el lote se cortó porque quien lo pidió ya no administra la sede
+             * @example Mateo
+             */
+            firstName?: string;
+            /**
+             * @description Apellidos
+             * @example Rojas
+             */
+            lastName?: string;
         };
         BatchReportCardsResultDto: {
             /**
@@ -14010,7 +14050,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponseDto"];
                 };
             };
-            /** @description Estudiante, periodo o año no encontrado, o sin matrícula en él */
+            /** @description Periodo o año no encontrado; el estudiante no existe, no lo puede ver o no tiene matrícula en ese año (el mismo 404, sin distinguir) */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -15073,6 +15113,92 @@ export interface operations {
             };
             /** @description Error interno (mensaje genérico, sin detalles) */
             500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    ReportCardsController_pdf: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description UUID del recurso. Si no existe o es de otra institución: 404 */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description PDF (no se guarda en caché) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                };
+            };
+            /** @description Datos inválidos: en errores de validación `message` es la lista de errores */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Sin sesión válida: cookie ausente o vencida, sesión revocada, usuario inactivo o sin acceso a la institución activa. Renovar con POST /api/auth/refresh-token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Sin permiso. También «Debe cambiar la contraseña» mientras la contraseña sea temporal */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Boletín no encontrado */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Más de 60 por minuto */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Error interno (mensaje genérico, sin detalles) */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Fallo de Storage */
+            502: {
                 headers: {
                     [name: string]: unknown;
                 };

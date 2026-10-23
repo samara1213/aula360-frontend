@@ -21,6 +21,8 @@ const people = () => import('@/features/people/people-routes');
 const academic = () => import('@/features/academic/academic-routes');
 // Evaluaciones y notas, en otro.
 const evaluations = () => import('@/features/evaluations/evaluations-routes');
+// Reportes (boletines), en otro.
+const reports = () => import('@/features/reports/reports-routes');
 
 export const routes: RouteObject[] = [
   {
@@ -297,7 +299,17 @@ export const routes: RouteObject[] = [
                   },
                 ],
               },
-              // Opciones del menú sin pantalla todavía (`reports.report-cards` → /reports/report-cards) y 404.
+              {
+                path: '/reports/report-cards',
+                element: <RequireMenuView slug="reports.report-cards" />,
+                children: [
+                  {
+                    index: true,
+                    lazy: async () => ({ Component: (await reports()).ReportCardsRoute }),
+                  },
+                ],
+              },
+              // Opciones del menú sin pantalla todavía y 404.
               { path: '/*', element: <ModulePage /> },
             ],
           },

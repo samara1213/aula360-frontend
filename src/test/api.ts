@@ -187,3 +187,12 @@ export function evaluationsMenu(
     ]),
   ];
 }
+
+/** Grupo «Reportes» con «Boletines», con los permisos que se pidan. */
+export function reportsMenu(permissions: MenuPermissions = FULL): MenuNode[] {
+  return [
+    menuNode('reports', 'Reportes', VIEW_ONLY, [
+      menuNode('reports.report-cards', 'Boletines', permissions),
+    ]),
+  ];
+}

@@ -680,7 +680,66 @@ const STUDENT_GRADEBOOK = {
   yearAverage: null,
 };
 
+// Boletines.
+const reportCard = (
+  id: string,
+  studentId: string,
+  firstName: string,
+  lastName: string,
+  finalAverage: number,
+  outdated = false,
+) => ({
+  id,
+  student: { id: studentId, firstName, lastName },
+  course: { id: COURSE_ID, name: '601' },
+  period: { id: MY_PERIODS[0]?.id, name: 'Primer periodo' },
+  finalAverage,
+  templateId: null,
+  outdated,
+  outdatedAt: outdated ? '2026-04-20T10:00:00Z' : null,
+  generatedBy: 'user-1',
+  generatedAt: '2026-04-10T10:00:00Z',
+});
+const REPORT_CARDS = [
+  reportCard('a7b8c9d0-e1f2-4a3b-8c4d-5e6f7a8b9c0d', STUDENT_ID, 'Mateo', 'Rojas Castañeda', 4.36),
+  reportCard(
+    'b8c9d0e1-f2a3-4b4c-9d5e-6f7a8b9c0d1e',
+    'd8e9f0a1-b2c3-4d4e-9f5a-7b8c9d0e1f2a',
+    'María José',
+    'Fernández de la Hoz',
+    3.48,
+    true,
+  ),
+  reportCard(
+    'c9d0e1f2-a3b4-4c5d-8e6f-7a8b9c0d1e2f',
+    'e9f0a1b2-c3d4-4e5f-8a6b-8c9d0e1f2a3b',
+    'Valentina',
+    'Ospina',
+    2.91,
+  ),
+];
+const MY_REPORT_CARDS = [
+  {
+    id: REPORT_CARDS[0]?.id,
+    course: { id: COURSE_ID, name: '601' },
+    period: { id: MY_PERIODS[0]?.id, name: 'Primer periodo' },
+    finalAverage: 4.36,
+    outdated: false,
+    generatedAt: '2026-04-10T10:00:00Z',
+  },
+  {
+    id: 'd0e1f2a3-b4c5-4d6e-9f7a-8b9c0d1e2f3a',
+    course: { id: COURSE_ID, name: '601' },
+    period: { id: MY_PERIODS[1]?.id, name: 'Segundo periodo' },
+    finalAverage: 3.9,
+    outdated: true,
+    generatedAt: '2026-06-25T10:00:00Z',
+  },
+];
+
 const GET_DATA: Record<string, unknown> = {
+  '/api/report-cards': page(REPORT_CARDS),
+  '/api/report-cards/mine': MY_REPORT_CARDS,
   [`/api/gradebook/courses/${COURSE_ID}`]: COURSE_GRADEBOOK,
   '/api/gradebook/mine': STUDENT_GRADEBOOK,
   [`/api/gradebook/students/${STUDENT_ID}`]: STUDENT_GRADEBOOK,

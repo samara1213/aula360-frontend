@@ -6,6 +6,8 @@ type ErrorBody = components['schemas']['ErrorResponseDto'];
 export const ERROR_CODES = {
   PASSWORD_CHANGE_REQUIRED: 'PASSWORD_CHANGE_REQUIRED',
   REFRESH_TOKEN_ROTATED: 'REFRESH_TOKEN_ROTATED',
+  /** Al boletín le faltan definitivas: se puede generar de todos modos (409). */
+  REPORT_CARD_PENDING_FINALS: 'REPORT_CARD_PENDING_FINALS',
 } as const;
 
 /** Error de la API con el formato de AllExceptionsFilter del backend. */

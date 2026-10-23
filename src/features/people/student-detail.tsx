@@ -11,6 +11,7 @@ import { DetailPage } from '@/components/detail-page';
 import { Section } from '@/components/section';
 import { StudentEnrollments } from '@/features/academic/student-enrollments';
 import { StudentGradesSection } from '@/features/evaluations/student-grades-section';
+import { StudentReportCardsSection } from '@/features/reports/student-report-cards';
 import { Alert } from '@/components/ui/alert';
 import { StatusBadge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -116,6 +117,7 @@ function StudentFile({ student }: { student: Student }) {
       )}
       <StudentEnrollments studentId={student.id} />
       <StudentGradesSection studentId={student.id} />
+      <StudentReportCardsSection studentId={student.id} />
     </>
   );
 }

@@ -1,33 +1,16 @@
 import { ApiError } from '@/api/errors';
-import type { Course, CourseGradebook } from '@/api/types';
-import { useSession } from '@/auth/session';
-import { pickOption, useIdParam } from '@/components/data/list-params';
-import { ListToolbar, SelectFilter } from '@/components/data/list-toolbar';
+import type { CourseGradebook } from '@/api/types';
 import { Alert } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { usePeriods } from '@/features/academic/academic-api';
 import { EnrollmentBadge } from '@/features/academic/enrollment-badge';
-import { useCourseOptions, useYearFilter } from '@/features/academic/options';
-import { YearFilter } from '@/features/academic/pickers';
 import { PageHeader } from '@/features/layout/page-header';
 import { usePermissions } from '@/features/menu/menu';
-import { formatDay } from '@/lib/format';
-import {
-  useCourseGradebook,
-  useMyAssignments,
-  useMyGradebook,
-  useMyPeriods,
-} from './evaluations-api';
+import { CoursePeriodContent, CoursePeriodToolbar, RetryAlert } from './course-period';
+import { useActiveRoles, useCoursePeriod } from './course-period-state';
+import { useCourseGradebook, useMyAssignments, useMyGradebook } from './evaluations-api';
 import { AverageScore, GradeCell, GradesLegend } from './grades';
-import { defaultPeriod, schoolToday } from './score-rules';
 import { StudentGrades } from './student-grades';
-
-/** Roles de la sesión en la institución activa. */
-function useActiveRoles(): string[] {
-  const { data: session } = useSession();
-  return session?.institutions.find((i) => i.id === session.activeInstitutionId)?.roles ?? [];
-}
 
 /**
  * /evaluations/scores: el estudiante ve sus notas; el personal, el cuadro de
@@ -98,112 +81,28 @@ function MyGrades() {
   return <StudentGrades data={data} />;
 }
 
-/**
- * Cuadro de un curso en un periodo. Con el permiso de ver Años lectivos se
- * elige el año y sus cursos; si no (el docente), los cursos de su carga.
- * Filtros en la URL (`?year=`, `?course=`, `?period=`), aplicados solo si
- * están entre las opciones.
- */
+/** Cuadro de un curso en un periodo (el docente elige entre los cursos de su carga). */
 function CourseGradebookView() {
-  const today = schoolToday();
-  const yearsView = usePermissions('academic.years').view;
-  const coursesView = usePermissions('academic.courses').view;
-  // Por año solo si además ve Cursos; si no, los de su carga (I2 de la 3e-2).
-  const byYear = yearsView && coursesView;
-  // Siempre un año: con «todos» no hay cursos que elegir (I2).
-  const year = useYearFilter({ allowAll: false });
-  const courseParam = useIdParam('course');
-  const periodParam = useIdParam('period');
-  const mine = useMyAssignments();
-  const yearCourses = useCourseOptions(year.academicYearId, { enabled: byYear });
-
-  // Sin años lectivos, los cursos de su carga (sin repetir).
-  const mineCourses = [...new Map((mine.data ?? []).map((a) => [a.course.id, a.course])).values()];
-  // Solo cursos del año elegido: mientras carga otro año, la lista anterior
-  // (placeholderData) no valida un ?course= de ese año (B2 de la 3e-2).
-  const courses: Course[] = byYear
-    ? yearCourses.courses.filter((c) => c.academicYear.id === year.academicYearId)
-    : mineCourses;
-  const courseOptions = courses.map((c) => ({
-    value: c.id,
-    label: `${c.name} · ${c.grade.name} · ${c.campus.name}`,
-  }));
-  const coursesPending = byYear ? year.isPending || yearCourses.isPending : mine.isPending;
-  const courseChoice = pickOption(courseParam, courseOptions, coursesPending);
-  const course = courses.find((c) => c.id === courseChoice.id);
-
-  const periodsView = usePermissions('academic.periods');
-  const yearId = course?.academicYear.id;
-  const yearPeriods = usePeriods(periodsView.view ? yearId : undefined);
-  const myPeriods = useMyPeriods({
-    enabled: course !== undefined && !periodsView.isLoading && !periodsView.view,
-  });
-  const periods = periodsView.view
-    ? (yearPeriods.data ?? [])
-    : (myPeriods.data ?? []).filter((p) => p.academicYearId === yearId);
-  const periodsPending = periodsView.view ? yearPeriods.isPending : myPeriods.isPending;
-  const period = periods.find((p) => p.id === periodParam.id) ?? defaultPeriod(periods, today);
-
-  const gradebook = useCourseGradebook(course?.id, period?.id);
-
+  const state = useCoursePeriod({ ownLoad: true });
+  const gradebook = useCourseGradebook(state.course?.id, state.period?.id);
   return (
     <>
-      <ListToolbar>
-        {byYear && <YearFilter filter={year} />}
-        <SelectFilter
-          label="Curso"
-          value={courseChoice.value}
-          options={courseOptions}
-          onChange={courseParam.set}
-          allLabel={
-            coursesPending
-              ? 'Cargando…'
-              : courseOptions.length === 0
-                ? 'No hay cursos'
-                : 'Elige el curso'
-          }
-          className="sm:w-72"
-        />
-        {course && periods.length > 0 && (
-          <SelectFilter
-            label="Periodo"
-            value={period?.id ?? ''}
-            options={periods.map((p) => ({
-              value: p.id,
-              label: `${p.name} (${formatDay(p.startDate)} al ${formatDay(p.endDate)})`,
-            }))}
-            onChange={periodParam.set}
-            allLabel={null}
-            className="sm:w-96"
-          />
-        )}
-      </ListToolbar>
-
-      {!course ? (
-        <div className="rounded-2xl border border-dashed border-rule bg-card px-6 py-10 text-center">
-          <p className="font-bold">
-            {!coursesPending && courseOptions.length === 0
-              ? 'No tienes cursos para consultar.'
-              : 'Elige el curso para ver su cuadro de notas.'}
-          </p>
-        </div>
-      ) : !periodsPending && periods.length === 0 ? (
-        <Alert variant="info">
-          {!periodsView.view && !mine.data?.some((a) => a.course.id === course.id)
-            ? 'Para elegir el periodo necesitas también el permiso de ver Periodos.'
-            : `El año lectivo ${String(course.academicYear.year)} todavía no tiene periodos.`}
-        </Alert>
-      ) : gradebook.isPending ? (
-        <Skeleton className="h-80 rounded-2xl" />
-      ) : gradebook.error ? (
-        gradebook.error instanceof ApiError && gradebook.error.status === 404 ? (
-          <Alert variant="info">No tienes notas que consultar en este curso.</Alert>
-        ) : (
-          <RetryAlert what="el cuadro de notas" onRetry={() => void gradebook.refetch()} />
-        )
-      ) : (
-        <CourseTable data={gradebook.data} />
-      )}
+      <CoursePeriodToolbar state={state} />
+      <CoursePeriodContent state={state} prompt="Elige el curso para ver su cuadro de notas.">
+        {() =>
+          gradebook.isPending ? (
+            <Skeleton className="h-80 rounded-2xl" />
+          ) : gradebook.error ? (
+            gradebook.error instanceof ApiError && gradebook.error.status === 404 ? (
+              <Alert variant="info">No tienes notas que consultar en este curso.</Alert>
+            ) : (
+              <RetryAlert what="el cuadro de notas" onRetry={() => void gradebook.refetch()} />
+            )
+          ) : (
+            <CourseTable data={gradebook.data} />
+          )
+        }
+      </CoursePeriodContent>
     </>
   );
 }
@@ -312,21 +211,6 @@ function CourseTable({ data }: { data: CourseGradebook }) {
         ))}
       </ul>
     </div>
-  );
-}
-
-function RetryAlert({ what, onRetry }: { what: string; onRetry: () => void }) {
-  return (
-    <Alert variant="error">
-      No pudimos cargar {what}.{' '}
-      <button
-        type="button"
-        className="cursor-pointer font-bold text-primary underline"
-        onClick={onRetry}
-      >
-        Reintentar
-      </button>
-    </Alert>
   );
 }
 
