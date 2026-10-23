@@ -21,7 +21,7 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/features/layout/page-header';
 import { usePermissions } from '@/features/menu/menu';
-import { formatDay } from '@/lib/format';
+import { formatDay, isDay } from '@/lib/format';
 import {
   useCreatePeriod,
   useDeletePeriod,
@@ -240,18 +240,6 @@ export function PeriodsPanel({ year }: { year: AcademicYear }) {
         />
       )}
     </Section>
-  );
-}
-
-const DAY = /^\d{4}-\d{2}-\d{2}$/;
-
-/** 'YYYY-MM-DD' de un día que existe (no '2026-02-31'). I4 de la 3d-1. */
-function isDay(value: string): boolean {
-  if (!DAY.test(value)) return false;
-  const [year = 0, month = 0, day = 0] = value.split('-').map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day));
-  return (
-    date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day
   );
 }
 

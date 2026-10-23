@@ -19,6 +19,8 @@ const security = () => import('@/features/security/security-routes');
 const people = () => import('@/features/people/people-routes');
 // Académico, en otro.
 const academic = () => import('@/features/academic/academic-routes');
+// Evaluaciones y notas, en otro.
+const evaluations = () => import('@/features/evaluations/evaluations-routes');
 
 export const routes: RouteObject[] = [
   {
@@ -261,6 +263,27 @@ export const routes: RouteObject[] = [
                   {
                     index: true,
                     lazy: async () => ({ Component: (await academic()).EnrollmentsRoute }),
+                  },
+                ],
+              },
+              {
+                path: '/evaluations/evaluations',
+                element: <RequireMenuView slug="evaluations.evaluations" />,
+                children: [
+                  {
+                    index: true,
+                    lazy: async () => ({ Component: (await evaluations()).EvaluationsRoute }),
+                  },
+                ],
+              },
+              {
+                // La planilla exige el permiso de Notas (el backend, el de ver notas).
+                path: '/evaluations/evaluations/:id/scores',
+                element: <RequireMenuView slug="evaluations.scores" />,
+                children: [
+                  {
+                    index: true,
+                    lazy: async () => ({ Component: (await evaluations()).ScoreSheetRoute }),
                   },
                 ],
               },

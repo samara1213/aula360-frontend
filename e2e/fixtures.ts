@@ -78,6 +78,7 @@ export const MENU = [
     leaf('academic.enrollments', 'Matrículas', 'user-plus'),
   ]),
   group('evaluations', 'Evaluaciones', 'clipboard-check', [
+    leaf('evaluations.evaluations', 'Evaluaciones', 'file-check'),
     leaf('evaluations.scores', 'Notas', 'pencil'),
   ]),
   group('reports', 'Reportes', 'file-text', [
@@ -450,7 +451,100 @@ const ENROLLMENTS = [
   ),
 ];
 
+// Evaluaciones y notas (ids UUID: los filtros de la URL solo aceptan UUID).
+export const ASSIGNMENT_ID = 'c1d2e3f4-a5b6-4c7d-8e9f-0a1b2c3d4e5f';
+export const EVALUATION_ID = 'd2e3f4a5-b6c7-4d8e-9f0a-1b2c3d4e5f6a';
+const MY_ASSIGNMENTS = [
+  { ...assignmentRow(ASSIGNMENT_ID, 'Matemáticas', 'Laura Cristina', 'Gómez Restrepo') },
+  {
+    ...assignmentRow(
+      'e3f4a5b6-c7d8-4e9f-8a0b-2c3d4e5f6a7b',
+      'Ciencias naturales y educación ambiental',
+      'Laura Cristina',
+      'Gómez Restrepo',
+    ),
+    course: COURSES[2],
+  },
+];
+const MY_PERIODS = [
+  academicPeriod(
+    'f4a5b6c7-d8e9-4f0a-9b1c-3d4e5f6a7b8c',
+    'Primer periodo',
+    '2026-01-26',
+    '2026-04-03',
+  ),
+  academicPeriod(
+    'a5b6c7d8-e9f0-4a1b-8c2d-4e5f6a7b8c9d',
+    'Segundo periodo',
+    '2026-04-13',
+    '2099-12-31',
+  ),
+];
+const evaluationRow = (id: string, title: string, percentage: number, date: string) => ({
+  id,
+  title,
+  percentage,
+  evaluationDate: date,
+  period: MY_PERIODS[1],
+  teacherAssignment: {
+    id: ASSIGNMENT_ID,
+    isActive: true,
+    course: { id: COURSE_ID, name: '601' },
+    subject: MY_ASSIGNMENTS[0]?.subject,
+    teacher: MY_ASSIGNMENTS[0]?.teacher,
+  },
+  createdAt: stamp.createdAt,
+});
+const EVALUATIONS = [
+  evaluationRow(EVALUATION_ID, 'Taller de fracciones', 25, '2026-04-20'),
+  evaluationRow(
+    'b6c7d8e9-f0a1-4b2c-9d3e-5f6a7b8c9d0e',
+    'Evaluación escrita del segundo periodo sobre proporcionalidad',
+    35,
+    '2026-05-15',
+  ),
+  evaluationRow('c7d8e9f0-a1b2-4c3d-8e4f-6a7b8c9d0e1f', 'Exposición', 12.5, '2026-06-02'),
+];
+const scoreStudent = (
+  studentId: string,
+  firstName: string,
+  lastName: string,
+  score: number | null,
+  enrollmentStatus: string | null = 'ENROLLED',
+) => ({
+  studentId,
+  firstName,
+  lastName,
+  enrollmentStatus,
+  score,
+  status: score === null ? 'PENDING' : 'GRADED',
+  updatedAt: score === null ? null : stamp.createdAt,
+});
+const SCORE_SHEET = {
+  evaluation: EVALUATIONS[0],
+  scale: { min: 1, max: 5, passingScore: 3 },
+  students: [
+    scoreStudent(STUDENT_ID, 'Mateo', 'Rojas Castañeda', 4.5),
+    scoreStudent('d8e9f0a1-b2c3-4d4e-9f5a-7b8c9d0e1f2a', 'María José', 'Fernández de la Hoz', null),
+    scoreStudent('e9f0a1b2-c3d4-4e5f-8a6b-8c9d0e1f2a3b', 'Valentina', 'Ospina', 2.8, 'SUSPENDED'),
+    scoreStudent(
+      'f0a1b2c3-d4e5-4f6a-9b7c-9d0e1f2a3b4c',
+      'Juan José',
+      'Martínez Pérez',
+      3,
+      'DROPPED',
+    ),
+    scoreStudent('a1b2c3d4-e5f6-4a7b-8c8d-0e1f2a3b4c5d', 'Sara', 'López', null),
+  ],
+  canAdminister: true,
+  lockedReason: null,
+};
+
 const GET_DATA: Record<string, unknown> = {
+  '/api/teacher-assignments/mine': MY_ASSIGNMENTS,
+  '/api/teacher-assignments/mine/periods': MY_PERIODS,
+  '/api/evaluations': { ...page(EVALUATIONS), canAdminister: true },
+  [`/api/evaluations/${EVALUATION_ID}/scores`]: SCORE_SHEET,
   '/api/courses': page(COURSES),
   [`/api/courses/${COURSE_ID}`]: COURSES[0],
   '/api/teacher-assignments': page(ASSIGNMENTS),

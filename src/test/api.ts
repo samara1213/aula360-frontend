@@ -171,3 +171,19 @@ export function academicMenu(
     ),
   ];
 }
+
+/**
+ * Grupo «Evaluaciones» (evaluaciones y notas). Por defecto, como el rol
+ * TEACHER: evaluaciones con todo y notas sin borrar.
+ */
+export function evaluationsMenu(
+  evaluations: MenuPermissions = FULL,
+  scores: MenuPermissions = { view: true, create: true, update: true, delete: false },
+): MenuNode[] {
+  return [
+    menuNode('evaluations', 'Evaluaciones', VIEW_ONLY, [
+      menuNode('evaluations.evaluations', 'Evaluaciones', evaluations),
+      menuNode('evaluations.scores', 'Notas', scores),
+    ]),
+  ];
+}

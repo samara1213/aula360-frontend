@@ -1346,6 +1346,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/teacher-assignments/mine/periods": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Periodos de mi carga activa (docente)
+         * @description Periodos de los años activos en que tiene carga activa. Lista vacía si no tiene perfil de docente en la institución activa.
+         */
+        get: operations["TeacherAssignmentsController_findMinePeriods"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/teacher-assignments/{id}": {
         parameters: {
             query?: never;
@@ -3420,6 +3440,8 @@ export interface components {
         EvaluationPageDto: {
             data: components["schemas"]["EvaluationResponseDto"][];
             meta: components["schemas"]["PaginationMetaDto"];
+            /** @description Solo con courseId: administra las evaluaciones de la sede del curso (también fuera de plazo y en cargas de otros). Solo orienta a la interfaz: cada escritura se vuelve a validar. */
+            canAdminister?: boolean;
         };
         CreateEvaluationDto: {
             /**
@@ -3464,7 +3486,7 @@ export interface components {
         ScoreStudentDto: {
             /**
              * Format: uuid
-             * @description UUID del estudiante (su usuario)
+             * @description UUID del estudiante (su perfil en students, no el del usuario)
              */
             studentId: string;
             /** @description Nombres */
@@ -3474,8 +3496,9 @@ export interface components {
             /**
              * @description Estado de su matrícula en el curso; null si ya no está matriculado en él pero conserva la nota
              * @example ENROLLED
+             * @enum {string|null}
              */
-            enrollmentStatus: Record<string, never> | null;
+            enrollmentStatus: "ENROLLED" | "DROPPED" | "GRADUATED" | "SUSPENDED" | null;
             /** @example 4.5 */
             score: number | null;
             /**
@@ -3494,11 +3517,15 @@ export interface components {
             scale: components["schemas"]["GradingScaleDto"];
             /** @description Estudiantes matriculados en el curso (cualquier estado) y quienes ya tienen nota */
             students: components["schemas"]["ScoreStudentDto"][];
+            /** @description Solo en GET: administra la sede del curso (corrige fuera de plazo, en cargas inactivas y a estudiantes retirados). Solo orienta a la interfaz: el PUT vuelve a validar todo. */
+            canAdminister?: boolean;
+            /** @description Solo en GET: por qué no puede registrar notas (periodo terminado, carga inactiva, sin permiso...); null si puede */
+            lockedReason?: string | null;
         };
         ScoreEntryDto: {
             /**
              * Format: uuid
-             * @description UUID del estudiante (su usuario)
+             * @description UUID del estudiante (su perfil en students, no el del usuario)
              */
             studentId: string;
             /**
@@ -12441,6 +12468,61 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TeacherAssignmentResponseDto"][];
+                };
+            };
+            /** @description Sin sesión válida: cookie ausente o vencida, sesión revocada, usuario inactivo o sin acceso a la institución activa. Renovar con POST /api/auth/refresh-token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Sin permiso para esta acción. También «Debe cambiar la contraseña» mientras la contraseña sea temporal */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Límite de peticiones superado; la cabecera Retry-After indica cuántos segundos esperar */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Error interno (mensaje genérico, sin detalles) */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    TeacherAssignmentsController_findMinePeriods: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PeriodResponseDto"][];
                 };
             };
             /** @description Sin sesión válida: cookie ausente o vencida, sesión revocada, usuario inactivo o sin acceso a la institución activa. Renovar con POST /api/auth/refresh-token */
