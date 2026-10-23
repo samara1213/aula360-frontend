@@ -287,7 +287,17 @@ export const routes: RouteObject[] = [
                   },
                 ],
               },
-              // Opciones del menú sin pantalla todavía (`evaluations.scores` → /evaluations/scores) y 404.
+              {
+                path: '/evaluations/scores',
+                element: <RequireMenuView slug="evaluations.scores" />,
+                children: [
+                  {
+                    index: true,
+                    lazy: async () => ({ Component: (await evaluations()).GradebookRoute }),
+                  },
+                ],
+              },
+              // Opciones del menú sin pantalla todavía (`reports.report-cards` → /reports/report-cards) y 404.
               { path: '/*', element: <ModulePage /> },
             ],
           },

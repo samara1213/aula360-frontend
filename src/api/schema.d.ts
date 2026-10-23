@@ -3635,8 +3635,11 @@ export interface components {
         };
         StudentGradebookDto: {
             student: components["schemas"]["GradebookStudentDto"];
-            /** @example ENROLLED */
-            enrollmentStatus: string;
+            /**
+             * @example ENROLLED
+             * @enum {string}
+             */
+            enrollmentStatus: "ENROLLED" | "DROPPED" | "GRADUATED" | "SUSPENDED";
             course: components["schemas"]["EvaluationCourseDto"];
             academicYear: components["schemas"]["GradebookYearDto"];
             scale: components["schemas"]["GradingScaleDto"];
@@ -3692,8 +3695,11 @@ export interface components {
         };
         CourseGradebookRowDto: {
             student: components["schemas"]["GradebookStudentDto"];
-            /** @example ENROLLED */
-            enrollmentStatus: string;
+            /**
+             * @example ENROLLED
+             * @enum {string}
+             */
+            enrollmentStatus: "ENROLLED" | "DROPPED" | "GRADUATED" | "SUSPENDED";
             subjects: components["schemas"]["CourseSubjectGradeDto"][];
             /** @description Promedio de las definitivas del periodo; null sin ninguna */
             average: number | null;

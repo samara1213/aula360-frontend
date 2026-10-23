@@ -14,7 +14,11 @@ export function YearFilter({ filter }: { filter: ReturnType<typeof useYearFilter
     <SelectFilter
       label="Año lectivo"
       value={filter.value}
-      options={[...filter.options, { value: 'all', label: 'Todos los años' }]}
+      options={
+        filter.allowAll
+          ? [...filter.options, { value: 'all', label: 'Todos los años' }]
+          : filter.options
+      }
       onChange={filter.set}
       allLabel={null}
       className="sm:w-44"

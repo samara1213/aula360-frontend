@@ -11,17 +11,20 @@ export const isForbidden = (error: unknown) => error instanceof ApiError && erro
 
 /**
  * Año lectivo de un listado (`?year=`): sin parámetro, el activo más reciente;
- * `all`, todos. Sin permiso de ver Años lectivos no hay filtro (todos).
+ * `all`, todos. Sin permiso de ver Años lectivos no hay filtro (todos). Con
+ * `allowAll: false` siempre hay un año (`all` vale como el predeterminado).
  */
-export function useYearFilter() {
+export function useYearFilter({ allowAll = true }: { allowAll?: boolean } = {}) {
   const [params, setParams] = useSearchParams();
   const canList = usePermissions('academic.years').view;
   const years = useYearChoices({ enabled: canList });
   const rows = years.data?.data ?? [];
   const raw = params.get('year') ?? '';
   const fallback = rows.find((y) => y.isActive) ?? rows[0];
-  const selected = raw === 'all' ? undefined : (rows.find((y) => y.id === raw) ?? fallback);
+  const selected =
+    raw === 'all' && allowAll ? undefined : (rows.find((y) => y.id === raw) ?? fallback);
   return {
+    allowAll,
     available: canList && rows.length > 0,
     /** Mientras cargan los años no se sabe cuál es el predeterminado. */
     isPending: canList && years.isPending,

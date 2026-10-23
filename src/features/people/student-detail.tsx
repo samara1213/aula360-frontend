@@ -10,6 +10,7 @@ import { ConfirmDialog } from '@/components/confirm-dialog';
 import { DetailPage } from '@/components/detail-page';
 import { Section } from '@/components/section';
 import { StudentEnrollments } from '@/features/academic/student-enrollments';
+import { StudentGradesSection } from '@/features/evaluations/student-grades-section';
 import { Alert } from '@/components/ui/alert';
 import { StatusBadge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -114,6 +115,7 @@ function StudentFile({ student }: { student: Student }) {
         </Section>
       )}
       <StudentEnrollments studentId={student.id} />
+      <StudentGradesSection studentId={student.id} />
     </>
   );
 }

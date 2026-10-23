@@ -18,12 +18,12 @@ function useEvaluationsKey() {
 }
 
 /** La carga activa del propio docente (sin permiso de menú: basta su perfil). */
-export function useMyAssignments() {
+export function useMyAssignments({ enabled = true }: { enabled?: boolean } = {}) {
   const key = useEvaluationsKey();
   return useQuery({
     queryKey: [...key, 'mine'],
     queryFn: () => unwrap(api.GET('/api/teacher-assignments/mine')),
-    enabled: typeof key[1] === 'string',
+    enabled: enabled && typeof key[1] === 'string',
   });
 }
 
@@ -130,5 +130,67 @@ export function useSaveScores(id: string) {
       }
       void queryClient.invalidateQueries({ queryKey: key });
     }),
+  });
+}
+
+// ─── Cuadro de notas (gradebook) ───────────────────────────────────────────
+// Notas de menores: gcTime 0, no quedan en la caché al salir de la pantalla.
+// staleTime corto: volver a la ventana o cambiar de pestaña no repite la
+// consulta cada vez (límite de 60 por minuto; I3 de la 3e-2).
+const GRADEBOOK_STALE_MS = 30_000;
+
+/** Cuadro de un curso en un periodo (al docente, solo sus materias). */
+export function useCourseGradebook(courseId: string | undefined, periodId: string | undefined) {
+  const key = useEvaluationsKey();
+  return useQuery({
+    queryKey: [...key, 'gradebook', 'course', courseId, periodId],
+    queryFn: () =>
+      unwrap(
+        api.GET('/api/gradebook/courses/{courseId}', {
+          params: { path: { courseId: courseId ?? '' }, query: { periodId: periodId ?? '' } },
+        }),
+      ),
+    enabled: courseId !== undefined && periodId !== undefined && typeof key[1] === 'string',
+    gcTime: 0,
+    staleTime: GRADEBOOK_STALE_MS,
+  });
+}
+
+/**
+ * Notas de un estudiante por año (sin año: el activo más reciente en que
+ * está matriculado). Al docente, solo sus materias.
+ */
+export function useStudentGradebook(
+  studentId: string,
+  academicYearId: string | undefined,
+  { enabled = true }: { enabled?: boolean } = {},
+) {
+  const key = useEvaluationsKey();
+  return useQuery({
+    queryKey: [...key, 'gradebook', 'student', studentId, academicYearId],
+    queryFn: () =>
+      unwrap(
+        api.GET('/api/gradebook/students/{studentId}', {
+          params: {
+            path: { studentId },
+            query: academicYearId ? { academicYearId } : {},
+          },
+        }),
+      ),
+    enabled: enabled && isUuid(studentId) && typeof key[1] === 'string',
+    gcTime: 0,
+    staleTime: GRADEBOOK_STALE_MS,
+  });
+}
+
+/** Las notas del propio estudiante en su año activo. */
+export function useMyGradebook({ enabled = true }: { enabled?: boolean } = {}) {
+  const key = useEvaluationsKey();
+  return useQuery({
+    queryKey: [...key, 'gradebook', 'mine'],
+    queryFn: () => unwrap(api.GET('/api/gradebook/mine')),
+    enabled: enabled && typeof key[1] === 'string',
+    gcTime: 0,
+    staleTime: GRADEBOOK_STALE_MS,
   });
 }

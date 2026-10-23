@@ -86,6 +86,13 @@ export const MENU = [
   ]),
 ];
 
+/** Estudiante de la institución activa (solo sus notas). */
+export const STUDENT_SESSION = {
+  ...SESSION,
+  institutions: [{ ...SESSION.institutions[0], roles: ['STUDENT'] }],
+  user: { ...SESSION.user, userType: 'STUDENT', firstName: 'Mateo', lastName: 'Rojas Castañeda' },
+};
+
 export const SUPER_ADMIN_SESSION = {
   activeInstitutionId: null,
   institutions: [],
@@ -540,7 +547,143 @@ const SCORE_SHEET = {
   lockedReason: null,
 };
 
+// Cuadro de notas: un curso con varias materias (más ancho que un celular).
+const SUBJECT_NAMES = [
+  'Matemáticas',
+  'Lengua castellana',
+  'Ciencias naturales y educación ambiental',
+  'Ciencias sociales',
+  'Inglés',
+  'Educación física',
+  'Educación artística',
+  'Tecnología e informática',
+];
+const SUBJECTS = SUBJECT_NAMES.map((name, i) => ({
+  id: `b${String(i)}c7d8e9-f0a1-4b2c-9d3e-5f6a7b8c9d0e`,
+  name,
+}));
+const periodGrade = (final: number | null, scored = 3, count = 3, accumulated = final ?? 2.1) => ({
+  evaluationCount: count,
+  scoredCount: scored,
+  allocatedPercentage: count === 0 ? 0 : 100,
+  accumulated: count === 0 ? 0 : accumulated,
+  final,
+  passed: final === null ? null : final >= 3,
+});
+const gradebookStudent = (
+  id: string,
+  firstName: string,
+  lastName: string,
+  status: string,
+  finals: (number | null)[],
+) => {
+  const values = finals.filter((v): v is number => v !== null);
+  return {
+    student: { id, firstName, lastName },
+    enrollmentStatus: status,
+    subjects: SUBJECTS.map((subject, i) => ({
+      subjectId: subject.id,
+      ...(i >= finals.length ? periodGrade(null, 0, 0) : periodGrade(finals[i] ?? null, 2)),
+    })),
+    average: values.length
+      ? Math.round((values.reduce((a, b) => a + b, 0) / values.length) * 100) / 100
+      : null,
+  };
+};
+const COURSE_GRADEBOOK = {
+  course: { id: COURSE_ID, name: '601' },
+  period: MY_PERIODS[1],
+  scale: { min: 1, max: 5, passingScore: 3 },
+  subjects: SUBJECTS,
+  students: [
+    gradebookStudent(
+      STUDENT_ID,
+      'Mateo',
+      'Rojas Castañeda',
+      'ENROLLED',
+      [4.5, 3.8, 4.1, 2.7, 4.9, 5, 3.2, 4],
+    ),
+    gradebookStudent(
+      'd8e9f0a1-b2c3-4d4e-9f5a-7b8c9d0e1f2a',
+      'María José',
+      'Fernández de la Hoz',
+      'ENROLLED',
+      [3.1, null, 3.6, 3, 2.4, 4.4, 4, 3.9],
+    ),
+    gradebookStudent('e9f0a1b2-c3d4-4e5f-8a6b-8c9d0e1f2a3b', 'Valentina', 'Ospina', 'SUSPENDED', [
+      null,
+      null,
+      2.2,
+      null,
+      3.5,
+    ]),
+  ],
+};
+const STUDENT_GRADEBOOK = {
+  student: { id: STUDENT_ID, firstName: 'Mateo', lastName: 'Rojas Castañeda' },
+  enrollmentStatus: 'ENROLLED',
+  course: { id: COURSE_ID, name: '601' },
+  academicYear: year2026,
+  scale: { min: 1, max: 5, passingScore: 3 },
+  periods: MY_PERIODS.map(({ id, name, startDate, endDate }) => ({ id, name, startDate, endDate })),
+  subjects: SUBJECTS.slice(0, 5).map((subject, i) => ({
+    ...subject,
+    periods: [
+      {
+        periodId: MY_PERIODS[0]?.id,
+        ...periodGrade([4.2, 2.8, 3.9, 4.6, 3.3][i] ?? null),
+        evaluations: [
+          {
+            id: `e1-${String(i)}`,
+            title: 'Taller de fracciones',
+            percentage: 40,
+            evaluationDate: '2026-02-20',
+            score: 4,
+          },
+          {
+            id: `e2-${String(i)}`,
+            title: 'Evaluación escrita del primer periodo',
+            percentage: 60,
+            evaluationDate: '2026-03-25',
+            score: 4.3,
+          },
+        ],
+      },
+      {
+        periodId: MY_PERIODS[1]?.id,
+        ...periodGrade(null, 1, 3, 1.6),
+        evaluations: [
+          {
+            id: `e3-${String(i)}`,
+            title: 'Exposición',
+            percentage: 30,
+            evaluationDate: '2026-05-04',
+            score: 4.5,
+          },
+          {
+            id: `e4-${String(i)}`,
+            title: 'Quiz',
+            percentage: 30,
+            evaluationDate: '2026-05-20',
+            score: null,
+          },
+        ],
+      },
+    ],
+    yearFinal: null,
+    yearPassed: null,
+  })),
+  periodAverages: [
+    { periodId: MY_PERIODS[0]?.id, average: 3.76 },
+    { periodId: MY_PERIODS[1]?.id, average: null },
+  ],
+  yearAverage: null,
+};
+
 const GET_DATA: Record<string, unknown> = {
+  [`/api/gradebook/courses/${COURSE_ID}`]: COURSE_GRADEBOOK,
+  '/api/gradebook/mine': STUDENT_GRADEBOOK,
+  [`/api/gradebook/students/${STUDENT_ID}`]: STUDENT_GRADEBOOK,
   '/api/teacher-assignments/mine': MY_ASSIGNMENTS,
   '/api/teacher-assignments/mine/periods': MY_PERIODS,
   '/api/evaluations': { ...page(EVALUATIONS), canAdminister: true },
