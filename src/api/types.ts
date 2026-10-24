@@ -75,4 +75,5 @@ export type StudentSubjectGrades = Schemas['StudentSubjectGradesDto'];
 export type SubjectPeriodGrade = Omit<CourseSubjectGrade, 'subjectId'>;
 export type ReportCard = Schemas['ReportCardResponseDto'];
 export type OwnReportCard = Schemas['OwnReportCardDto'];
+export type ReportTemplate = Schemas['ReportTemplateResponseDto'];
 export type BatchReportCardsResult = Schemas['BatchReportCardsResultDto'];

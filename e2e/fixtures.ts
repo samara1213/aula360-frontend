@@ -737,7 +737,30 @@ const MY_REPORT_CARDS = [
   },
 ];
 
+/** Plantillas del boletín de la institución (SUPER_ADMIN). */
+const REPORT_TEMPLATES = [
+  {
+    id: 'e1f2a3b4-c5d6-4e7f-8a9b-0c1d2e3f4a5b',
+    name: 'Boletín institucional 2026 con escudo y firmas de rectoría',
+    description: 'Encabezado a color, tabla por áreas y espacio para las firmas.',
+    isActive: true,
+    contentSha256: 'a'.repeat(64),
+    createdBy: null,
+    createdAt: '2026-10-20T15:00:00Z',
+  },
+  {
+    id: 'f2a3b4c5-d6e7-4f8a-9b0c-1d2e3f4a5b6c',
+    name: 'Versión sobria',
+    description: null,
+    isActive: false,
+    contentSha256: 'b'.repeat(64),
+    createdBy: null,
+    createdAt: '2026-10-18T15:00:00Z',
+  },
+];
+
 const GET_DATA: Record<string, unknown> = {
+  [`/api/institutions/${INSTITUTION_ID}/report-card-templates`]: REPORT_TEMPLATES,
   '/api/report-cards': page(REPORT_CARDS),
   '/api/report-cards/mine': MY_REPORT_CARDS,
   [`/api/gradebook/courses/${COURSE_ID}`]: COURSE_GRADEBOOK,

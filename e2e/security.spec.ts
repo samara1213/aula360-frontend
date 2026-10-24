@@ -103,6 +103,54 @@ for (const viewport of VIEWPORTS) {
         await check(page, info, 'admin-institucion-usuarios');
       });
 
+      test('SUPER_ADMIN: plantillas del boletín de una institución', async ({ page }, info) => {
+        await setTheme(page, theme);
+        await mockApi(page, SUPER_ADMIN_SESSION);
+        await page.goto(`/admin/institutions/${INSTITUTION_ID}?tab=templates`);
+        await expect(page.getByRole('tab', { name: 'Boletín' })).toHaveAttribute(
+          'aria-selected',
+          'true',
+        );
+        await expect(page.getByRole('list', { name: 'Plantillas' })).toBeVisible();
+        await page.getByText('Variables disponibles').click();
+        await check(page, info, 'admin-institucion-plantillas');
+
+        // El navegador envía el archivo con su nombre: el backend exige .html.
+        const uploaded = new Promise<string>((resolve) => {
+          void page.route('**/api/institutions/*/report-card-templates', (route) => {
+            if (route.request().method() !== 'POST') return route.fallback();
+            resolve(route.request().postData() ?? '');
+            return route.fulfill({
+              status: 201,
+              contentType: 'application/json',
+              body: JSON.stringify({
+                id: 'a3b4c5d6-e7f8-4a9b-8c1d-2e3f4a5b6c7d',
+                name: 'Nueva',
+                description: null,
+                isActive: false,
+                contentSha256: 'c'.repeat(64),
+                createdBy: null,
+                createdAt: '2026-10-23T15:00:00Z',
+              }),
+            });
+          });
+        });
+        await page.getByRole('button', { name: 'Subir plantilla' }).click();
+        const dialog = page.getByRole('dialog', { name: 'Subir plantilla' });
+        await dialog.locator('input[type="file"]').setInputFiles({
+          name: 'nueva.html',
+          mimeType: 'text/html',
+          buffer: Buffer.from('<p>{{student.firstName}}</p>'),
+        });
+        await dialog.getByLabel('Nombre').fill('Nueva');
+        await expectAccessible(page);
+        await dialog.getByRole('button', { name: 'Subir plantilla' }).click();
+        const body = await uploaded;
+        expect(body).toContain('filename="nueva.html"');
+        expect(body).toContain('name="name"');
+        await expect(page.getByText(/«Nueva» subida/)).toBeVisible();
+      });
+
       test('SUPER_ADMIN: sedes de una institución', async ({ page }, info) => {
         await setTheme(page, theme);
         await mockApi(page, SUPER_ADMIN_SESSION);

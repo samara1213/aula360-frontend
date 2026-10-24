@@ -1,4 +1,13 @@
-import { Building2, ChevronLeft, MapPin, Power, PowerOff, ShieldCheck, Users } from 'lucide-react';
+import {
+  Building2,
+  ChevronLeft,
+  FileText,
+  MapPin,
+  Power,
+  PowerOff,
+  ShieldCheck,
+  Users,
+} from 'lucide-react';
 import { useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
@@ -25,10 +34,11 @@ import { UsersList } from '@/features/security/users-list';
 import { isUuid } from '@/lib/ids';
 import { InstitutionAssignments } from './institution-assignments';
 import { InstitutionForm } from './institution-form';
+import { ReportTemplates } from './report-templates';
 
 /**
  * /admin/institutions/:id (SUPER_ADMIN): pestañas Datos (datos, logo y
- * estado), Sedes, Usuarios (crear su primer administrador) y Asignaciones. La
+ * estado), Sedes, Usuarios (crear su primer administrador), Asignaciones y Boletín (plantillas). La
  * pestaña va en la URL (`?tab=users`).
  */
 export function InstitutionDetailPage() {
@@ -83,7 +93,10 @@ function InstitutionDetail({ institution }: { institution: Institution }) {
   const [params, setParams] = useSearchParams();
   const requested = params.get('tab');
   const tab =
-    requested === 'campuses' || requested === 'users' || requested === 'assignments'
+    requested === 'campuses' ||
+    requested === 'users' ||
+    requested === 'assignments' ||
+    requested === 'templates'
       ? requested
       : 'data';
 
@@ -127,6 +140,10 @@ function InstitutionDetail({ institution }: { institution: Institution }) {
           <TabsTrigger value="assignments">
             <ShieldCheck aria-hidden="true" />
             Asignaciones
+          </TabsTrigger>
+          <TabsTrigger value="templates">
+            <FileText aria-hidden="true" />
+            Boletín
           </TabsTrigger>
         </TabsList>
         <TabsContent value="data">
@@ -175,6 +192,9 @@ function InstitutionDetail({ institution }: { institution: Institution }) {
         </TabsContent>
         <TabsContent value="assignments">
           <InstitutionAssignments institutionId={institution.id} />
+        </TabsContent>
+        <TabsContent value="templates">
+          <ReportTemplates institutionId={institution.id} />
         </TabsContent>
       </Tabs>
 
