@@ -58,6 +58,20 @@
   --level-alto-foreground: #0b544c;
   --level-superior: #2343c4;
   --level-superior-foreground: #ffffff;
+
+  /* Avisos emergentes: fondo opaco por tipo para que no se confundan con las tarjetas */
+  --notice-info: #e3e9ff;
+  --notice-info-foreground: #1a2142;
+  --notice-info-border: #2343c4;
+  --notice-success: #cdebe3;
+  --notice-success-foreground: #0b544c;
+  --notice-success-border: #0b544c;
+  --notice-warning: #f6e7b0;
+  --notice-warning-foreground: #5e4700;
+  --notice-warning-border: #8a6a00;
+  --notice-error: #fde8e6;
+  --notice-error-foreground: #7a1a10;
+  --notice-error-border: #b42318;
 }
 
 .dark {
@@ -106,6 +120,19 @@
   --level-alto-foreground: #93dccb;
   --level-superior: #8ea2ff;
   --level-superior-foreground: #0e1430;
+
+  --notice-info: #24306e;
+  --notice-info-foreground: #e7ebf7;
+  --notice-info-border: #8ea2ff;
+  --notice-success: #123b35;
+  --notice-success-foreground: #b9eadd;
+  --notice-success-border: #93dccb;
+  --notice-warning: #4a3d10;
+  --notice-warning-foreground: #f6e7b0;
+  --notice-warning-border: #d9b84a;
+  --notice-error: #4a1610;
+  --notice-error-foreground: #ffd9d3;
+  --notice-error-border: #ff8a7a;
 }
 
 @theme inline {
@@ -156,6 +183,18 @@
   --color-level-alto-foreground: var(--level-alto-foreground);
   --color-level-superior: var(--level-superior);
   --color-level-superior-foreground: var(--level-superior-foreground);
+  --color-notice-info: var(--notice-info);
+  --color-notice-info-foreground: var(--notice-info-foreground);
+  --color-notice-info-border: var(--notice-info-border);
+  --color-notice-success: var(--notice-success);
+  --color-notice-success-foreground: var(--notice-success-foreground);
+  --color-notice-success-border: var(--notice-success-border);
+  --color-notice-warning: var(--notice-warning);
+  --color-notice-warning-foreground: var(--notice-warning-foreground);
+  --color-notice-warning-border: var(--notice-warning-border);
+  --color-notice-error: var(--notice-error);
+  --color-notice-error-foreground: var(--notice-error-foreground);
+  --color-notice-error-border: var(--notice-error-border);
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
