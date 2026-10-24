@@ -9,6 +9,10 @@
 
 server_tokens off;
 
+# Informes de la CSP (sin sesión, los manda el navegador): límite propio por IP
+# antes del backend (B3 de la entrega C). Va en el contexto http.
+limit_req_zone $binary_remote_addr zone=csp_reports:1m rate=60r/m;
+
 # http solo redirige a https (M1 de la 3g-1): nunca se sirve la aplicación
 # sin cifrar, ni siquiera en la primera visita.
 server {
@@ -56,6 +60,17 @@ server {
         client_max_body_size 3m;
         # Boletines y vistas previas se imprimen con Chromium (I5 de la 3g-1).
         proxy_read_timeout 90s;
+    }
+
+    # Informes de la CSP: cuerpo pequeño y límite por IP (el backend corta en
+    # 64 KB y además limita por IP y en todo el proceso).
+    location = /api/csp-reports {
+        limit_req zone=csp_reports burst=20 nodelay;
+        client_max_body_size 64k;
+        proxy_pass http://127.0.0.1:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 
     # Archivos con hash en el nombre: caché de un año.

@@ -45,7 +45,8 @@ Para regenerar los tipos de la API: en el backend `yarn openapi:export openapi.j
 Cabeceras (en todas las respuestas de la aplicación):
 
 ```
-Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-<yarn headers>'; style-src 'self' 'unsafe-inline'; img-src 'self' https://<proyecto>.supabase.co; font-src 'self'; connect-src 'self' <origen de la API si es otro>; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests
+Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-<yarn headers>'; style-src 'self' 'unsafe-inline'; img-src 'self' https://<proyecto>.supabase.co; font-src 'self'; connect-src 'self' <origen de la API si es otro>; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests; require-trusted-types-for 'script'; trusted-types 'none'; report-to csp; report-uri /api/csp-reports
+Reporting-Endpoints: csp="/api/csp-reports"
 Strict-Transport-Security: max-age=31536000; includeSubDomains
 X-Content-Type-Options: nosniff
 Referrer-Policy: no-referrer
@@ -59,7 +60,8 @@ Cross-Origin-Opener-Policy: same-origin
 - `object-src 'none'`: los PDF (boletines y vistas previas de plantillas) se abren como `blob:` en otra pestaña y heredan la CSP; el visor de PDF de Chrome los muestra igual (comprobado en `e2e-prod`, proyecto `chrome`).
 - `Referrer-Policy: no-referrer`: ninguna URL de la aplicación sale en el `Referer`.
 - HSTS sin `preload`: entrar en la lista de precarga de los navegadores compromete todo el dominio y sus subdominios; se decide con quien administra el dominio (ver el ejemplo de nginx).
-- Posibles mejoras: `report-to` para recibir las violaciones de la CSP en producción y Trusted Types (`require-trusted-types-for 'script'`).
+- Trusted Types (`require-trusted-types-for 'script'; trusted-types 'none'`): el navegador no deja insertar HTML ni código como texto (`innerHTML`, `eval`, `script.src`...) y no se pueden crear políticas para saltárselo. La app no usa esos puntos y ESLint los prohíbe (`innerHTML`, `outerHTML`, `insertAdjacentHTML`, `document.write`..., y `Select` y `ScrollArea` de Radix, que montan un `<style>` con `innerHTML`). `e2e-prod` recorre las pantallas con la política y comprueba que `innerHTML` se bloquea, pero solo cubre lo que se pinta: un desplegable o un diálogo que no abre no se prueba. En desarrollo no hay CSP, así que estos fallos solo aparecen en producción. Si una librería nueva lo necesita, se decide una política con nombre; no se quita la directiva. Los navegadores sin Trusted Types la ignoran.
+- Informes de violaciones: el navegador los manda al backend (`POST /api/csp-reports`, sin sesión), que guarda en su log solo la directiva, el origen de lo bloqueado y del script que la causó, la ruta de la página y, en Trusted Types, el punto bloqueado (nunca el contenido). En nginx, `location = /api/csp-reports` con su límite por IP y 64 KB (ver `deploy/nginx.conf.example`). Chrome usa `report-to` (Reporting API, agrupa y envía por su cuenta) y, si existe, ignora `report-uri`; los demás navegadores usan `report-uri`. Con la API en otro origen, `CSP_REPORT_URL` con la URL https completa al generar las cabeceras. Los orígenes (`CSP_IMG_ORIGINS`, `CSP_CONNECT_ORIGINS`) y `CSP_REPORT_URL` se validan: https (http solo en localhost), sin ruta en los orígenes y sin `;`, `,`, comillas, `$`, `\` ni espacios; si no, `yarn headers` falla. Chrome bajo Playwright no envía los informes de `report-to`: `e2e-prod` comprueba el envío por `report-uri`.
 - Caché: `index.html` (y toda ruta de la SPA) con `Cache-Control: no-cache`; `assets/*` con `public, max-age=31536000, immutable`.
 - Rutas: cualquier ruta desconocida devuelve `index.html` (aplicación de una sola página).
 - La API en el mismo sitio (ver «Sesión»), con `CORS_ORIGINS` y `FRONTEND_URL` del backend en el origen de la aplicación.

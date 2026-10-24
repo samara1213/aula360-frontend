@@ -92,6 +92,9 @@ test.describe('build de producción', () => {
       expect(csp).toMatch(/script-src 'self' 'sha256-[A-Za-z0-9+/=]+'/);
       expect(csp).toContain("object-src 'none'");
       expect(csp).toContain("frame-ancestors 'none'");
+      expect(csp).toContain("require-trusted-types-for 'script'; trusted-types 'none'");
+      expect(csp).toContain('report-to csp; report-uri /api/csp-reports');
+      expect(headers['reporting-endpoints']).toBe('csp="/api/csp-reports"');
       expect(headers['referrer-policy']).toBe('no-referrer');
       expect(headers['x-content-type-options']).toBe('nosniff');
       expect(headers['cross-origin-opener-policy']).toBe('same-origin');
@@ -156,6 +159,56 @@ test.describe('build de producción', () => {
       .first()
       .click();
     expect(await downloaded).toMatch(/^blob:/);
+  });
+});
+
+test.describe('Trusted Types', () => {
+  test('bloquea insertar HTML como texto y el informe llega a /api/csp-reports', async ({
+    page,
+  }) => {
+    // Chrome bajo Playwright no envía los informes de la Reporting API
+    // (report-to), y con report-to presente ignora report-uri: aquí se quita
+    // report-to de la respuesta para comprobar el envío por report-uri con el
+    // resto de la CSP real. En producción Chrome informa por report-to.
+    await page.route('**/login', async (route) => {
+      const response = await route.fetch();
+      const headers = { ...response.headers() };
+      delete headers['reporting-endpoints'];
+      headers['content-security-policy'] = (headers['content-security-policy'] ?? '').replace(
+        'report-to csp; ',
+        '',
+      );
+      expect(headers['content-security-policy']).toContain(
+        "require-trusted-types-for 'script'; trusted-types 'none'; report-uri /api/csp-reports",
+      );
+      await route.fulfill({ response, headers });
+    });
+    await mockApi(page, null);
+    // Después de mockApi: la ruta más reciente gana.
+    const reports: { type: string; body: string }[] = [];
+    await page.route('**/api/csp-reports', async (route) => {
+      reports.push({
+        type: route.request().headers()['content-type'] ?? '',
+        body: route.request().postData() ?? '',
+      });
+      await route.fulfill({ status: 204 });
+    });
+    await page.goto('/login');
+    await expect(page.getByRole('button', { name: 'Ingresar' })).toBeVisible();
+    const result = await page.evaluate(() => {
+      try {
+        // eslint-disable-next-line no-restricted-syntax -- la prueba comprueba que Trusted Types lo bloquea
+        document.createElement('div').innerHTML = '<img src=x>';
+        return 'permitido';
+      } catch (error) {
+        return (error as Error).name;
+      }
+    });
+    expect(result).toBe('TypeError');
+    await expect.poll(() => reports.length).toBeGreaterThan(0);
+    const report = reports.find((r) => r.body.includes('require-trusted-types-for'));
+    expect(report?.type).toBe('application/csp-report');
+    expect(report?.body).toContain('"document-uri":"http://localhost:4173/login"');
   });
 });
 

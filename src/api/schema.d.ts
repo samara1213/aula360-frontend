@@ -21,6 +21,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/csp-reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Recibir violaciones de la CSP que informa el navegador
+         * @description Sin sesión (lo llama el navegador). Acepta application/reports+json (Reporting API) y application/csp-report (report-uri), hasta 64 KB y 20 informes por petición. Solo se registra en el log la directiva, el origen de lo bloqueado y del script que la causó, la ruta de la página y, en Trusted Types, el punto bloqueado; nunca la consulta, el contenido ni el cuerpo completo (máximo 200 líneas por minuto en el proceso). 204 si se acepta.
+         */
+        post: operations["CspReportsController_receive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/login": {
         parameters: {
             query?: never;
@@ -4342,6 +4362,75 @@ export interface operations {
                         /** @example ok */
                         status: string;
                     };
+                };
+            };
+            /** @description Límite de peticiones superado; la cabecera Retry-After indica cuántos segundos esperar */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Error interno (mensaje genérico, sin detalles) */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    CspReportsController_receive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Informes del navegador (formato de la Reporting API o de report-uri) */
+        requestBody: {
+            content: {
+                "application/reports+json": Record<string, never>;
+                "application/csp-report": Record<string, never>;
+            };
+        };
+        responses: {
+            /** @description Recibido */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Datos inválidos: en errores de validación `message` es la lista de errores */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Cuerpo de más de 64 KB */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Otro tipo de contenido */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
                 };
             };
             /** @description Límite de peticiones superado; la cabecera Retry-After indica cuántos segundos esperar */

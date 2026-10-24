@@ -29,6 +29,7 @@ function productionHeaders(): Plugin {
         html,
         imgOrigins: originsFromEnv(process.env.CSP_IMG_ORIGINS),
         connectOrigins: originsFromEnv(process.env.CSP_CONNECT_ORIGINS),
+        reportUrl: process.env.CSP_REPORT_URL || undefined,
       });
       server.middlewares.use((req, res, next) => {
         for (const [name, value] of Object.entries(headers)) res.setHeader(name, value);
