@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { useForm, useWatch } from 'react-hook-form';
 import { Link } from 'react-router';
-import { z } from 'zod';
+import { z } from '@/lib/zod';
 import { api, unwrap } from '@/api/client';
 import { errorSentence } from '@/api/errors';
 import { Field } from '@/components/form/field';

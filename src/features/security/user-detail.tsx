@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link } from 'react-router';
 import { toast } from 'sonner';
-import { z } from 'zod';
+import { z } from '@/lib/zod';
 import { errorMessage } from '@/api/errors';
 import type { ManagedUser, MenuPermissions, UpdateUserBody, UserAssignment } from '@/api/types';
 import { useSession } from '@/auth/session';

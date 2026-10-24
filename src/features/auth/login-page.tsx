@@ -3,7 +3,7 @@ import { LockKeyhole, UserRound } from 'lucide-react';
 import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { Link } from 'react-router';
-import { z } from 'zod';
+import { z } from '@/lib/zod';
 import { ApiError, errorMessage } from '@/api/errors';
 import { useLogin } from '@/auth/session';
 import { Field } from '@/components/form/field';

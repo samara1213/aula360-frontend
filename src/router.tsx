@@ -1,18 +1,14 @@
 import { createBrowserRouter, Navigate, type RouteObject } from 'react-router';
 import { PublicOnly, RequireSession } from '@/auth/guards';
 import { FullPageLoader } from '@/components/full-page-state';
-import { ChangePasswordPage } from '@/features/auth/force-change-password-page';
-import { ForgotPasswordPage } from '@/features/auth/forgot-password-page';
-import { LoginPage } from '@/features/auth/login-page';
-import { ResetPasswordPage } from '@/features/auth/reset-password-page';
 import { SelectInstitutionPage } from '@/features/auth/select-institution-page';
-import { VerifyEmailPage } from '@/features/auth/verify-email-page';
 import { HomePage } from '@/features/home/home-page';
 import { AppLayout } from '@/features/layout/app-layout';
 import { ModulePage, RouteErrorPage } from '@/features/layout/status-pages';
 import { RequireMenuView, RequireSuperAdmin } from '@/features/menu/route-guards';
-import { ProfilePage } from '@/features/profile/profile-page';
 
+// Login, recuperar y cambiar contraseña y verificar correo, en un archivo diferido.
+const auth = () => import('@/features/auth/auth-routes');
 // Las pantallas de seguridad (roles, menús y usuarios) van juntas en un archivo diferido.
 const security = () => import('@/features/security/security-routes');
 // Docentes y estudiantes, en otro.
@@ -33,24 +29,41 @@ export const routes: RouteObject[] = [
       {
         element: <PublicOnly />,
         children: [
-          { path: '/login', element: <LoginPage /> },
-          { path: '/forgot-password', element: <ForgotPasswordPage /> },
-          { path: '/reset-password', element: <ResetPasswordPage /> },
+          { path: '/login', lazy: async () => ({ Component: (await auth()).LoginPage }) },
+          {
+            path: '/forgot-password',
+            lazy: async () => ({ Component: (await auth()).ForgotPasswordPage }),
+          },
+          {
+            path: '/reset-password',
+            lazy: async () => ({ Component: (await auth()).ResetPasswordPage }),
+          },
         ],
       },
       // Con o sin sesión: el enlace del correo puede abrirse en otro dispositivo.
-      { path: '/verify-email', element: <VerifyEmailPage /> },
+      {
+        path: '/verify-email',
+        lazy: async () => ({ Component: (await auth()).VerifyEmailPage }),
+      },
       {
         // Sin sesión, cualquier otra ruta lleva al login (y vuelve después).
         element: <RequireSession />,
         children: [
-          { path: '/change-password', element: <ChangePasswordPage /> },
+          {
+            path: '/change-password',
+            lazy: async () => ({ Component: (await auth()).ChangePasswordPage }),
+          },
           { path: '/select-institution', element: <SelectInstitutionPage /> },
           {
             element: <AppLayout />,
             children: [
               { index: true, element: <HomePage /> },
-              { path: '/profile', element: <ProfilePage /> },
+              {
+                path: '/profile',
+                lazy: async () => ({
+                  Component: (await import('@/features/profile/profile-page')).ProfilePage,
+                }),
+              },
               {
                 path: '/institution',
                 element: <RequireMenuView slug="institution" />,

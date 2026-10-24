@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useWatch } from 'react-hook-form';
-import { z } from 'zod';
+import { z } from '@/lib/zod';
 import { errorMessage } from '@/api/errors';
 import { useChangePassword } from '@/auth/session';
 import { Field } from '@/components/form/field';

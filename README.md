@@ -19,7 +19,9 @@ yarn typecheck
 yarn lint
 yarn test         # Vitest
 yarn test:e2e     # Playwright (levanta yarn dev; la API va simulada)
+yarn test:e2e:prod # Playwright sobre el build con las cabeceras de producción
 yarn build        # dist/
+yarn headers      # cabeceras de producción con el hash del build (después de yarn build; --nginx para nginx)
 yarn api:types    # regenera src/api/schema.d.ts desde ../aula360-backend/openapi.json
 yarn csp:hash     # hash del script del tema para la CSP (después de yarn build)
 ```
@@ -33,12 +35,16 @@ Para regenerar los tipos de la API: en el backend `yarn openapi:export openapi.j
 - Las cookies httpOnly del backend llevan la sesión; el frontend nunca lee ni guarda tokens.
 - En desarrollo el proxy de Vite sirve `/api` desde el mismo origen. En producción, sirve el frontend **en el mismo sitio** que la API (p. ej. `app.colegio.co` y `api.colegio.co`, o la API bajo `/api` del mismo dominio): las cookies `SameSite=Lax` no viajan en `fetch` entre sitios distintos. Si la API está en otro origen, `VITE_API_BASE_URL` (queda en el bundle: nunca secretos en variables `VITE_*`).
 
-## Producción: cabeceras de seguridad
+## Despliegue
 
-El servidor o CDN que sirva `dist/` debe enviar:
+1. `yarn build` genera `dist/` (`index.html` y `assets/`, con hash en el nombre).
+2. `CSP_IMG_ORIGINS="https://<proyecto>.supabase.co" yarn headers` imprime las cabeceras de seguridad con el hash del build (`CSP_CONNECT_ORIGINS` si la API está en otro origen); con `--nginx`, como directivas `add_header` listas para incluir. La fuente única es `scripts/security-headers.mjs`: la usan también `vite preview` y `yarn test:e2e:prod`. Exige un solo script en línea en `index.html` (el del tema).
+3. El servidor o CDN sirve `dist/` con esas cabeceras, solo por https (http redirige). Ejemplo completo con la API bajo `/api`: `deploy/nginx.conf.example` (redirección de http, TLS 1.2+, sin archivos ocultos ni `.map`, `X-Forwarded-For` desde el borde con `TRUST_PROXY=1` en el backend).
+
+Cabeceras (en todas las respuestas de la aplicación):
 
 ```
-Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-<yarn csp:hash>'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://<proyecto>.supabase.co; font-src 'self'; connect-src 'self' <origen de la API si es otro>; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests
+Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-<yarn headers>'; style-src 'self' 'unsafe-inline'; img-src 'self' https://<proyecto>.supabase.co; font-src 'self'; connect-src 'self' <origen de la API si es otro>; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests
 Strict-Transport-Security: max-age=31536000; includeSubDomains
 X-Content-Type-Options: nosniff
 Referrer-Policy: no-referrer
@@ -46,11 +52,22 @@ Permissions-Policy: camera=(), microphone=(), geolocation=()
 Cross-Origin-Opener-Policy: same-origin
 ```
 
-- `script-src`: el hash del script en línea de `index.html` (aplica el tema antes de pintar). Calcúlalo sobre el build con `yarn build && yarn csp:hash`; si se edita ese script hay que actualizar el hash, o el tema deja de aplicarse sin aviso.
+- `script-src`: sin `unsafe-inline` ni `unsafe-eval`. El único script en línea es el del tema de `index.html` (aplica el tema antes de pintar); su hash cambia si se edita, y con un hash viejo el tema deja de aplicarse sin aviso. zod corre sin `new Function` (`src/lib/zod.ts`, `jitless`; ESLint prohíbe importar `zod` directo).
 - `style-src 'unsafe-inline'`: los avisos (sonner) y Radix insertan estilos en tiempo de ejecución.
-- `img-src`: las fotos de perfil llegan por URL firmada de Supabase Storage (bucket privado) y los logos por la URL pública del bucket `logos` (público a propósito: van en los boletines). Ambas son del dominio del proyecto de Supabase.
-- Caché: `index.html` con `Cache-Control: no-cache`; `assets/*` (llevan hash en el nombre) con `public, max-age=31536000, immutable`.
-- Rutas: cualquier ruta desconocida debe devolver `index.html` (aplicación de una sola página).
+- `img-src`: las fotos de perfil llegan por URL firmada de Supabase Storage (bucket privado) y los logos por la URL pública del bucket `logos`. Sin `data:` ni `blob:`: nada los usa.
+- `object-src 'none'`: los PDF (boletines y vistas previas de plantillas) se abren como `blob:` en otra pestaña y heredan la CSP; el visor de PDF de Chrome los muestra igual (comprobado en `e2e-prod`, proyecto `chrome`).
+- `Referrer-Policy: no-referrer`: ninguna URL de la aplicación sale en el `Referer`.
+- HSTS sin `preload`: entrar en la lista de precarga de los navegadores compromete todo el dominio y sus subdominios; se decide con quien administra el dominio (ver el ejemplo de nginx).
+- Posibles mejoras: `report-to` para recibir las violaciones de la CSP en producción y Trusted Types (`require-trusted-types-for 'script'`).
+- Caché: `index.html` (y toda ruta de la SPA) con `Cache-Control: no-cache`; `assets/*` con `public, max-age=31536000, immutable`.
+- Rutas: cualquier ruta desconocida devuelve `index.html` (aplicación de una sola página).
+- La API en el mismo sitio (ver «Sesión»), con `CORS_ORIGINS` y `FRONTEND_URL` del backend en el origen de la aplicación.
+
+`yarn test:e2e:prod` construye, levanta `vite preview` con estas cabeceras y recorre las pantallas: falla ante cualquier violación de la CSP o error de consola, y comprueba las cabeceras, la caché, la SPA y el script del tema. El proyecto `chrome` usa el Chrome instalado (visor de PDF real); sin Chrome, `yarn test:e2e:prod --project=chromium`.
+
+### Bundle
+
+El arranque carga `index` (la aplicación) y tres grupos de librerías que cambian poco entre despliegues (`react`, `data` y `ui`; ver `build.rolldownOptions` en `vite.config.ts`). Las pantallas van en archivos diferidos por módulo; zod y react-hook-form (`forms`) llegan solo con las pantallas de formularios, incluidas las de acceso (`features/auth/auth-routes.tsx`).
 
 ## Riesgos conocidos
 

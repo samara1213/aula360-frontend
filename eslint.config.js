@@ -33,7 +33,21 @@ export default tseslint.config(
           message: 'No se permite dangerouslySetInnerHTML.',
         },
       ],
+      // zod siempre desde @/lib/zod (sin eval, por la CSP).
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [{ name: 'zod', message: 'Importa z desde @/lib/zod (jitless, por la CSP).' }],
+          patterns: [
+            { group: ['zod/*'], message: 'Importa z desde @/lib/zod (jitless, por la CSP).' },
+          ],
+        },
+      ],
     },
+  },
+  {
+    files: ['src/lib/zod.ts'],
+    rules: { 'no-restricted-imports': 'off' },
   },
   {
     files: ['*.config.{js,ts}'],

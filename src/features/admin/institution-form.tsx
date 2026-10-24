@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { z } from 'zod';
+import { z } from '@/lib/zod';
 import { errorMessage } from '@/api/errors';
 import type { CreateInstitutionBody, Institution, UpdateInstitutionBody } from '@/api/types';
 import { Field } from '@/components/form/field';

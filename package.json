@@ -19,7 +19,9 @@
     "test:watch": "vitest",
     "api:types": "openapi-typescript ../aula360-backend/openapi.json -o src/api/schema.d.ts --default-non-nullable false",
     "test:e2e": "playwright test",
-    "csp:hash": "node scripts/csp-hash.mjs"
+    "csp:hash": "node scripts/csp-hash.mjs",
+    "test:e2e:prod": "playwright test -c playwright.prod.config.ts",
+    "headers": "node scripts/headers.mjs"
   },
   "dependencies": {
     "@fontsource-variable/atkinson-hyperlegible-next": "5.3.0",

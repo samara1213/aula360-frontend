@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { Link } from 'react-router';
 import { toast } from 'sonner';
-import { z } from 'zod';
+import { z } from '@/lib/zod';
 import { ApiError, errorMessage } from '@/api/errors';
 import type { RoleAssignment, UserLookup } from '@/api/types';
 import { ConfirmDialog } from '@/components/confirm-dialog';

@@ -87,6 +87,16 @@ export const MENU = [
 ];
 
 /** Estudiante de la institución activa (solo sus notas). */
+/** Un estudiante: solo Notas y Boletines en el menú. */
+export const STUDENT_MENU = MENU.filter(
+  (group) => group.slug === 'evaluations' || group.slug === 'reports',
+).map((group) => ({
+  ...group,
+  children: (group.children as { slug: string }[]).filter(
+    (leaf) => leaf.slug === 'evaluations.scores' || leaf.slug === 'reports.report-cards',
+  ),
+}));
+
 export const STUDENT_SESSION = {
   ...SESSION,
   institutions: [{ ...SESSION.institutions[0], roles: ['STUDENT'] }],

@@ -3,7 +3,7 @@ import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { z } from 'zod';
+import { z } from '@/lib/zod';
 import { errorMessage } from '@/api/errors';
 import type { CatalogItem } from '@/api/types';
 import { ConfirmDialog } from '@/components/confirm-dialog';

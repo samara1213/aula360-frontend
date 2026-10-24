@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { useLocation } from 'react-router';
 import { toast } from 'sonner';
-import { z } from 'zod';
+import { z } from '@/lib/zod';
 import { errorMessage } from '@/api/errors';
 import { useSession } from '@/auth/session';
 import { Field } from '@/components/form/field';

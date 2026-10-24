@@ -2,25 +2,15 @@ import { expect, test, type Page, type TestInfo } from '@playwright/test';
 import { expectAccessible, expectNoHorizontalScroll, trackConsole } from './checks';
 import {
   COURSE_ID,
-  MENU,
   mockApi,
   SESSION,
   setTheme,
   STUDENT_ID,
+  STUDENT_MENU,
   STUDENT_SESSION,
   THEMES,
   VIEWPORTS,
 } from './fixtures';
-
-/** Un estudiante: solo Notas y Boletines en el menú. */
-const STUDENT_MENU = MENU.filter(
-  (group) => group.slug === 'evaluations' || group.slug === 'reports',
-).map((group) => ({
-  ...group,
-  children: (group.children as { slug: string }[]).filter(
-    (leaf) => leaf.slug === 'evaluations.scores' || leaf.slug === 'reports.report-cards',
-  ),
-}));
 
 for (const viewport of VIEWPORTS) {
   for (const theme of THEMES) {

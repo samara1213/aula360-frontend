@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from '@/lib/zod';
 
 // Igual que src/common/validators/password-policy.ts del backend.
 export const PASSWORD_MIN_LENGTH = 10;

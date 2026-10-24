@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import type { z } from 'zod';
+import type { z } from '@/lib/zod';
 import { errorMessage } from '@/api/errors';
 import type { Teacher } from '@/api/types';
 import { useSession } from '@/auth/session';

@@ -3,7 +3,7 @@ import { CircleCheck, CircleOff, Eye, FileUp, Trash2 } from 'lucide-react';
 import { useRef, useState, type ReactNode, type SyntheticEvent } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { z } from 'zod';
+import { z } from '@/lib/zod';
 import { ApiError, errorMessage } from '@/api/errors';
 import type { ReportTemplate } from '@/api/types';
 import { ConfirmDialog } from '@/components/confirm-dialog';

@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from '@/lib/zod';
 
 /** Opcional: vacío se envía como null (así se borra al editar). */
 export const optional = (max: number, valid: (value: string) => boolean, message: string) =>

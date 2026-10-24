@@ -11,6 +11,9 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: [['list']],
+  // El servidor de desarrollo transforma los módulos al pedirlos: con varias
+  // pruebas en paralelo, la primera carga de una pantalla puede pasar de 5 s.
+  expect: { timeout: 10_000 },
   use: {
     baseURL: 'http://localhost:5173',
     locale: 'es-CO',

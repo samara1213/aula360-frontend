@@ -3,7 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import { Mail } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { Link } from 'react-router';
-import { z } from 'zod';
+import { z } from '@/lib/zod';
 import { api, unwrap } from '@/api/client';
 import { errorMessage } from '@/api/errors';
 import { Field } from '@/components/form/field';
