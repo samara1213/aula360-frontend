@@ -64,6 +64,86 @@ export function useForgetPerson(kind: 'teachers' | 'students') {
   };
 }
 
+// ─── Personas que ya tienen cuenta en otra institución ─────────────────────
+
+export type PersonDocument = { documentType: string; documentNumber: string };
+
+/**
+ * Busca por documento a quien ya tiene cuenta, para invitarlo: el backend
+ * responde solo «Carlos P.» (para confirmar que es la persona). Sin caché.
+ */
+export function useLinkCandidate(kind: 'teachers' | 'students') {
+  return useMutation({
+    gcTime: 0,
+    mutationFn: (query: PersonDocument) =>
+      unwrap(
+        kind === 'teachers'
+          ? api.GET('/api/teachers/link-candidate', { params: { query } })
+          : api.GET('/api/students/link-candidate', { params: { query } }),
+      ),
+  });
+}
+
+/** Invitaciones pendientes de la institución: solo «Carlos P.», la sede y las fechas. */
+export function usePendingInvitations(
+  kind: 'teachers' | 'students',
+  { enabled = true }: { enabled?: boolean } = {},
+) {
+  const key = usePeopleKey(kind);
+  return useQuery({
+    queryKey: [...key, 'invitations'],
+    queryFn: () =>
+      unwrap(
+        kind === 'teachers'
+          ? api.GET('/api/teachers/invitations')
+          : api.GET('/api/students/invitations'),
+      ),
+    enabled: enabled && typeof key[2] === 'string',
+  });
+}
+
+function useRefreshInvitations(kind: 'teachers' | 'students') {
+  const queryClient = useQueryClient();
+  const key = usePeopleKey(kind);
+  return () => void queryClient.invalidateQueries({ queryKey: [...key, 'invitations'] });
+}
+
+export type InvitationBody = PersonDocument & { campusId: string | null };
+
+/**
+ * Invita a quien ya tiene cuenta en otra institución. La persona la acepta o
+ * la rechaza al entrar; hasta entonces no se ven sus datos.
+ */
+export function useInvite(kind: 'teachers' | 'students') {
+  const refresh = useRefreshInvitations(kind);
+  return useMutation({
+    gcTime: 0,
+    mutationFn: (body: InvitationBody) =>
+      unwrap(
+        kind === 'teachers'
+          ? api.POST('/api/teachers/invitations', { body })
+          : api.POST('/api/students/invitations', { body }),
+      ),
+    onSuccess: refresh,
+  });
+}
+
+export function useCancelInvitation(kind: 'teachers' | 'students') {
+  const refresh = useRefreshInvitations(kind);
+  return useMutation({
+    mutationFn: (invitationId: string) => {
+      if (!isUuid(invitationId)) throw new Error('Invitación inválida');
+      const params = { params: { path: { invitationId } } };
+      return unwrap(
+        kind === 'teachers'
+          ? api.DELETE('/api/teachers/invitations/{invitationId}', params)
+          : api.DELETE('/api/students/invitations/{invitationId}', params),
+      );
+    },
+    onSuccess: refresh,
+  });
+}
+
 // ─── Docentes ──────────────────────────────────────────────────────────────
 
 export function useTeachers(query: PeopleQuery, { enabled = true }: { enabled?: boolean } = {}) {

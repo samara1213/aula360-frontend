@@ -225,6 +225,7 @@ function mockAcademic() {
       calls.studentQueries.push(new URL(request.url).searchParams);
       return HttpResponse.json(page([student()]));
     }),
+    http.get(apiUrl('/api/students/invitations'), () => HttpResponse.json([])),
     http.get(apiUrl('/api/students/:id'), () => HttpResponse.json(student())),
   );
   return calls;

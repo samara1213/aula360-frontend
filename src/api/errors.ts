@@ -8,6 +8,8 @@ export const ERROR_CODES = {
   REFRESH_TOKEN_ROTATED: 'REFRESH_TOKEN_ROTATED',
   /** Al boletín le faltan definitivas: se puede generar de todos modos (409). */
   REPORT_CARD_PENDING_FINALS: 'REPORT_CARD_PENDING_FINALS',
+  /** Documento o correo que ya usa otra cuenta (409): se ofrece invitarla. */
+  USER_ALREADY_EXISTS: 'USER_ALREADY_EXISTS',
 } as const;
 
 /** Error de la API con el formato de AllExceptionsFilter del backend. */

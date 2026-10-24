@@ -171,6 +171,9 @@ describe('plantillas del boletín (SUPER_ADMIN)', () => {
 
     await user.click(await screen.findByRole('button', { name: 'Subir plantilla' }));
     const dialog = await screen.findByRole('dialog', { name: 'Subir plantilla' });
+    // «Elegir archivo» va dentro del formulario: no lo envía (ni errores ni subida).
+    await user.click(within(dialog).getByRole('button', { name: 'Elegir archivo' }));
+    expect(within(dialog).queryByText('Escribe el nombre de la plantilla.')).toBeNull();
     await user.click(within(dialog).getByRole('button', { name: 'Subir plantilla' }));
     expect(
       await within(dialog).findByText('Elige el archivo .html de la plantilla.'),

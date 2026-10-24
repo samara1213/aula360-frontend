@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { PageHeader } from '@/features/layout/page-header';
 import { usePermissions } from '@/features/menu/menu';
+import { PendingInvitations } from './pending-invitations';
 import { useCampusChoices, useCampusFilter, type PeopleSlug } from './campus-choices';
 import { CampusFilter } from './person-fields';
 import type { PeopleQuery } from './people-api';
@@ -165,6 +166,9 @@ export function PeopleList<T extends { id: string }>({
           list.update({ page });
         }}
       />
+      {can.create && (
+        <PendingInvitations kind={slug === 'people.teachers' ? 'teachers' : 'students'} />
+      )}
       <Dialog open={creating} onOpenChange={setCreating}>
         {creating &&
           createDialog((createdId) => {

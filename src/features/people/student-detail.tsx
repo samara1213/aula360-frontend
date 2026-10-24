@@ -54,6 +54,8 @@ function StudentFile({ student }: { student: Student }) {
   // Activar, desactivar y la contraseña temporal son de la cuenta: permiso de Usuarios.
   const account = usePermissions('security.users');
   const refresh = useRefreshPeople('students');
+  const forget = useForgetPerson('students');
+  const navigate = useNavigate();
   const isSelf = session?.user.id === user.id;
   const name = `${user.firstName} ${user.lastName}`;
   // El backend solo entrega documento, contacto y acudiente a quien puede editarlo.
@@ -81,8 +83,12 @@ function StudentFile({ student }: { student: Student }) {
           !isSelf && (
             <AccountActions
               scope={{ kind: 'institution' }}
-              user={{ ...user, userType: 'STUDENT' }}
+              user={{ ...user, userType: 'STUDENT', sharedElsewhere: student.sharedElsewhere }}
               onChanged={refresh}
+              onRemoved={() => {
+                forget(student.id);
+                void navigate('/people/students');
+              }}
             />
           )
         }
@@ -234,7 +240,11 @@ function StudentFormFields({
     <>
       <form noValidate onSubmit={(e) => void onSubmit(e)} className="flex flex-col gap-5">
         {update.isError && <Alert variant="error">{errorMessage(update.error)}</Alert>}
-        <PersonalDataFields register={form.register} errors={errors} />
+        <PersonalDataFields
+          register={form.register}
+          errors={errors}
+          locked={student.sharedElsewhere ? { documentType: user.documentType ?? 'TI' } : undefined}
+        />
         <CampusSelect
           {...form.register('campusId')}
           choices={campuses}

@@ -140,6 +140,35 @@ export function useSetUserActive(scope: UsersScope, id: string) {
   });
 }
 
+/**
+ * Quita el acceso a la institución activa a quien también está en otra: deja
+ * de verse aquí y conserva su cuenta. Quien llama sale de su ficha.
+ */
+export function useRemoveInstitutionAccess(id: string) {
+  const queryClient = useQueryClient();
+  const { data: session } = useSession();
+  return useMutation({
+    mutationFn: () =>
+      unwrap(api.DELETE('/api/users/{id}/institution-access', { params: { path: { id } } })),
+    onSuccess: () => {
+      // Sus fichas (de usuario, docente o estudiante) ya no son de esta
+      // institución: se quitan de la caché en vez de recargarlas (darían 404).
+      queryClient.removeQueries({
+        queryKey: ['users', session?.activeInstitutionId, 'detail', id],
+      });
+      queryClient.removeQueries({
+        predicate: (query) =>
+          query.queryKey[0] === 'people' &&
+          query.queryKey[3] === 'detail' &&
+          (query.state.data as { user?: { id?: string } } | undefined)?.user?.id === id,
+      });
+      // Ya no está en los listados de usuarios ni de personas de esta institución.
+      void queryClient.invalidateQueries({ queryKey: ['users', session?.activeInstitutionId] });
+      void queryClient.invalidateQueries({ queryKey: ['people'] });
+    },
+  });
+}
+
 /** Contraseña temporal nueva: igual que al crear, se muestra una vez (gcTime 0). */
 export function useResetTemporaryPassword(scope: UsersScope, id: string) {
   const queryClient = useQueryClient();

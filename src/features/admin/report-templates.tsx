@@ -308,6 +308,8 @@ function UploadTemplateDialog({
                 }}
               />
               <Button
+                // Dentro del formulario: sin type="button" lo enviaría.
+                type="button"
                 variant="outline"
                 aria-invalid={control['aria-invalid']}
                 aria-describedby={control['aria-describedby']}

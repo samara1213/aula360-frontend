@@ -813,6 +813,60 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/users/me/invitations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Mis invitaciones pendientes */
+        get: operations["MyInvitationsController_mine"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/users/me/invitations/{id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Aceptar una invitación
+         * @description Crea su rol y su perfil en la institución. Para entrar a ella, cambiar de institución con /auth/switch-institution.
+         */
+        post: operations["MyInvitationsController_accept"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/users/me/invitations/{id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Rechazar una invitación */
+        post: operations["MyInvitationsController_reject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/users": {
         parameters: {
             query?: never;
@@ -890,6 +944,26 @@ export interface paths {
          * @description Solo si el usuario pertenece únicamente a esta institución (y a sus sedes, si su permiso está limitado a sedes); si no, solo un SUPER_ADMIN.
          */
         patch: operations["ManagedUsersController_setStatus"];
+        trace?: never;
+    };
+    "/api/users/{id}/institution-access": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Quitar el acceso a esta institución (persona que también está en otra)
+         * @description Quita todos sus roles en la institución activa: deja de entrar a ella en la siguiente petición y conserva su cuenta, su acceso a las demás y su historial aquí (perfil, cargas, notas, boletines). Solo si tiene acceso a otra institución (si no, 409: se desactiva con PATCH /users/:id/status). Exige además el permiso de quitar roles (security.users, eliminar) en todas sus sedes; con alcance por sede, solo si todos sus roles aquí están en esas sedes. 409 si tiene cargas académicas o una matrícula vigentes aquí. Cancela sus invitaciones pendientes de la institución. Para volver: una invitación nueva (POST /teachers/invitations o /students/invitations).
+         */
+        delete: operations["ManagedUsersController_removeInstitutionAccess"];
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/users/{id}/temporary-password": {
@@ -985,6 +1059,67 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/teachers/link-candidate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Buscar por documento a quien ya tiene cuenta, para invitarlo como docente
+         * @description Coincidencia exacta. Responde solo el nombre y la inicial del apellido («Carlos P.»). 404 si no hay una cuenta activa con ese documento; 409 si ya pertenece a la institución o no se puede invitar como docente (sin decir por qué). Toda consulta queda auditada.
+         */
+        get: operations["TeachersController_linkCandidate"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/teachers/invitations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Invitaciones pendientes como docente
+         * @description Solo el nombre corto y la sede: nada más hasta que la persona acepte.
+         */
+        get: operations["TeachersController_listInvitations"];
+        put?: never;
+        /**
+         * Invitar como docente a quien ya tiene cuenta en otra institución
+         * @description La persona la acepta o la rechaza con su sesión (GET /users/me/invitations); vence a los 14 días. Hasta que acepte, la institución no ve sus datos. Al aceptar se crean su rol en la sede indicada y su perfil. Se le avisa por correo si lo tiene verificado (a un estudiante, también a sus acudientes de las otras instituciones). Máximo 30 por día por institución.
+         */
+        post: operations["TeachersController_invite"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/teachers/invitations/{invitationId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Cancelar una invitación pendiente */
+        delete: operations["TeachersController_cancelInvitation"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/teachers": {
         parameters: {
             query?: never;
@@ -1025,6 +1160,67 @@ export interface paths {
          * @description Datos personales con las reglas de PATCH /users/:id (el email solo lo cambia un SUPER_ADMIN; el documento, solo si pertenece únicamente a esta institución). La baja es PATCH /users/:id/status.
          */
         patch: operations["TeachersController_update"];
+        trace?: never;
+    };
+    "/api/students/link-candidate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Buscar por documento a quien ya tiene cuenta, para invitarlo como estudiante
+         * @description Coincidencia exacta. Responde solo el nombre y la inicial del apellido («Carlos P.»). 404 si no hay una cuenta activa con ese documento; 409 si ya pertenece a la institución o no se puede invitar como estudiante (sin decir por qué). Toda consulta queda auditada.
+         */
+        get: operations["StudentsController_linkCandidate"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/students/invitations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Invitaciones pendientes como estudiante
+         * @description Solo el nombre corto y la sede: nada más hasta que la persona acepte.
+         */
+        get: operations["StudentsController_listInvitations"];
+        put?: never;
+        /**
+         * Invitar como estudiante a quien ya tiene cuenta en otra institución
+         * @description La persona la acepta o la rechaza con su sesión (GET /users/me/invitations); vence a los 14 días. Hasta que acepte, la institución no ve sus datos. Al aceptar se crean su rol en la sede indicada y su perfil. Se le avisa por correo si lo tiene verificado (a un estudiante, también a sus acudientes de las otras instituciones). Máximo 30 por día por institución.
+         */
+        post: operations["StudentsController_invite"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/students/invitations/{invitationId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Cancelar una invitación pendiente */
+        delete: operations["StudentsController_cancelInvitation"];
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/students": {
@@ -2465,6 +2661,46 @@ export interface components {
              */
             expiresIn: number;
         };
+        InvitationInstitutionDto: {
+            /**
+             * Format: uuid
+             * @description Identificador (UUID)
+             */
+            id: string;
+            /** @description Nombre */
+            name: string;
+        };
+        MyInvitationDto: {
+            /**
+             * Format: uuid
+             * @description Identificador (UUID)
+             */
+            id: string;
+            institution: components["schemas"]["InvitationInstitutionDto"];
+            /**
+             * @description Como qué entra a la institución: docente o estudiante
+             * @enum {string}
+             */
+            profileType: "TEACHER" | "STUDENT";
+            campus: components["schemas"]["AssignmentCampusDto"] | null;
+            /**
+             * Format: date-time
+             * @description Fecha de creación (ISO 8601)
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description Vence a los 14 días de enviada (ISO 8601)
+             */
+            expiresAt: string;
+        };
+        AcceptedInvitationDto: {
+            /**
+             * Format: uuid
+             * @description UUID de la institución
+             */
+            institutionId: string;
+        };
         UserAssignmentDto: {
             /**
              * Format: uuid
@@ -2499,6 +2735,8 @@ export interface components {
             hasPendingEmail: boolean;
             /** @description El email pendiente; solo lo ve un SUPER_ADMIN (null para los demás) */
             pendingEmail: string | null;
+            /** @description Solo en el detalle: también está en otra institución. Sus datos personales y su cuenta los gestiona el SUPER_ADMIN; aquí se le quita el acceso con DELETE /users/:id/institution-access. */
+            sharedElsewhere?: boolean;
             /** @description Teléfono */
             phone: string | null;
             /** @description Tiene avatar (se pide con GET /users/:id/avatar) */
@@ -2535,7 +2773,10 @@ export interface components {
              * @example CC
              */
             documentType: string;
-            /** @example 0000000000 */
+            /**
+             * @description Número de documento
+             * @example 0000000000
+             */
             documentNumber: string;
             /**
              * @description Nombres
@@ -2597,6 +2838,8 @@ export interface components {
             hasPendingEmail: boolean;
             /** @description El email pendiente; solo lo ve un SUPER_ADMIN (null para los demás) */
             pendingEmail: string | null;
+            /** @description Solo en el detalle: también está en otra institución. Sus datos personales y su cuenta los gestiona el SUPER_ADMIN; aquí se le quita el acceso con DELETE /users/:id/institution-access. */
+            sharedElsewhere?: boolean;
             /** @description Teléfono */
             phone: string | null;
             /** @description Tiene avatar (se pide con GET /users/:id/avatar) */
@@ -2631,7 +2874,10 @@ export interface components {
              * @example CC
              */
             documentType?: string;
-            /** @example 0000000000 */
+            /**
+             * @description Número de documento
+             * @example 0000000000
+             */
             documentNumber?: string;
             /**
              * @description Nombres
@@ -2661,6 +2907,55 @@ export interface components {
         TemporaryPasswordResponseDto: {
             /** @description Contraseña temporal nueva. Se muestra UNA sola vez; sus sesiones se cerraron. */
             temporaryPassword: string;
+        };
+        LinkCandidateResponseDto: {
+            /** @example Carlos P. */
+            displayName: string;
+        };
+        InvitationResponseDto: {
+            /**
+             * Format: uuid
+             * @description Identificador (UUID)
+             */
+            id: string;
+            /**
+             * @description Nombre e inicial del apellido: nada más hasta que acepte
+             * @example Carlos P.
+             */
+            displayName: string;
+            /**
+             * @description Como qué entra a la institución: docente o estudiante
+             * @enum {string}
+             */
+            profileType: "TEACHER" | "STUDENT";
+            campus: components["schemas"]["AssignmentCampusDto"] | null;
+            /**
+             * Format: date-time
+             * @description Fecha de creación (ISO 8601)
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description Vence a los 14 días de enviada (ISO 8601)
+             */
+            expiresAt: string;
+        };
+        CreateInvitationDto: {
+            /**
+             * @description CC, TI, CE...
+             * @example CC
+             */
+            documentType: string;
+            /**
+             * @description Número de documento
+             * @example 0000000000
+             */
+            documentNumber: string;
+            /**
+             * Format: uuid
+             * @description Sede propuesta (null = toda la institución para un docente, sin sede para un estudiante). Obligatoria si su acceso está limitado a sedes.
+             */
+            campusId?: string | null;
         };
         ProfileUserDto: {
             /**
@@ -2710,6 +3005,8 @@ export interface components {
              * @description Fecha de creación (ISO 8601)
              */
             createdAt: string;
+            /** @description Solo en el detalle: también está en otra institución. Sus datos personales y su cuenta los gestiona el SUPER_ADMIN; aquí se le quita el acceso con DELETE /users/:id/institution-access. */
+            sharedElsewhere?: boolean;
         };
         TeacherPageDto: {
             data: components["schemas"]["TeacherResponseDto"][];
@@ -2721,7 +3018,10 @@ export interface components {
              * @example CC
              */
             documentType: string;
-            /** @example 0000000000 */
+            /**
+             * @description Número de documento
+             * @example 0000000000
+             */
             documentNumber: string;
             /**
              * @description Nombres
@@ -2774,6 +3074,8 @@ export interface components {
              * @description Fecha de creación (ISO 8601)
              */
             createdAt: string;
+            /** @description Solo en el detalle: también está en otra institución. Sus datos personales y su cuenta los gestiona el SUPER_ADMIN; aquí se le quita el acceso con DELETE /users/:id/institution-access. */
+            sharedElsewhere?: boolean;
             /** @description Contraseña temporal. Se muestra UNA sola vez; debe cambiarla al entrar. */
             temporaryPassword: string;
         };
@@ -2783,7 +3085,10 @@ export interface components {
              * @example CC
              */
             documentType?: string;
-            /** @example 0000000000 */
+            /**
+             * @description Número de documento
+             * @example 0000000000
+             */
             documentNumber?: string;
             /**
              * @description Nombres
@@ -2888,6 +3193,8 @@ export interface components {
             guardianEmail?: string | null;
             /** @description Dato sensible (Ley 1581): solo aparece si usted puede editar a este estudiante */
             bloodType?: string | null;
+            /** @description Solo en el detalle: también está en otra institución. Sus datos personales y su cuenta los gestiona el SUPER_ADMIN; aquí se le quita el acceso con DELETE /users/:id/institution-access. */
+            sharedElsewhere?: boolean;
         };
         CreateStudentDto: {
             /**
@@ -2895,7 +3202,10 @@ export interface components {
              * @example CC
              */
             documentType: string;
-            /** @example 0000000000 */
+            /**
+             * @description Número de documento
+             * @example 0000000000
+             */
             documentNumber: string;
             /**
              * @description Nombres
@@ -2967,6 +3277,8 @@ export interface components {
             guardianEmail?: string | null;
             /** @description Dato sensible (Ley 1581): solo aparece si usted puede editar a este estudiante */
             bloodType?: string | null;
+            /** @description Solo en el detalle: también está en otra institución. Sus datos personales y su cuenta los gestiona el SUPER_ADMIN; aquí se le quita el acceso con DELETE /users/:id/institution-access. */
+            sharedElsewhere?: boolean;
             /** @description Contraseña temporal. Se muestra UNA sola vez; debe cambiarla al entrar. */
             temporaryPassword: string;
         };
@@ -2976,7 +3288,10 @@ export interface components {
              * @example CC
              */
             documentType?: string;
-            /** @example 0000000000 */
+            /**
+             * @description Número de documento
+             * @example 0000000000
+             */
             documentNumber?: string;
             /**
              * @description Nombres
@@ -8596,6 +8911,221 @@ export interface operations {
             };
         };
     };
+    MyInvitationsController_mine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyInvitationDto"][];
+                };
+            };
+            /** @description Sin sesión válida: cookie ausente o vencida, sesión revocada, usuario inactivo o sin acceso a la institución activa. Renovar con POST /api/auth/refresh-token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description «Debe cambiar la contraseña» mientras la contraseña sea temporal */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Límite de peticiones superado; la cabecera Retry-After indica cuántos segundos esperar */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Error interno (mensaje genérico, sin detalles) */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    MyInvitationsController_accept: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description UUID del recurso. Si no existe o es de otra institución: 404 */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcceptedInvitationDto"];
+                };
+            };
+            /** @description Datos inválidos: en errores de validación `message` es la lista de errores */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Sin sesión válida: cookie ausente o vencida, sesión revocada, usuario inactivo o sin acceso a la institución activa. Renovar con POST /api/auth/refresh-token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description «Debe cambiar la contraseña» mientras la contraseña sea temporal */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Invitación no encontrada */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Venció, la institución o la sede ya no está activa, o ya pertenece */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Límite de peticiones superado; la cabecera Retry-After indica cuántos segundos esperar */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Error interno (mensaje genérico, sin detalles) */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    MyInvitationsController_reject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description UUID del recurso. Si no existe o es de otra institución: 404 */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Invitación rechazada */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Datos inválidos: en errores de validación `message` es la lista de errores */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Sin sesión válida: cookie ausente o vencida, sesión revocada, usuario inactivo o sin acceso a la institución activa. Renovar con POST /api/auth/refresh-token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description «Debe cambiar la contraseña» mientras la contraseña sea temporal */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Invitación no encontrada */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Límite de peticiones superado; la cabecera Retry-After indica cuántos segundos esperar */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Error interno (mensaje genérico, sin detalles) */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
     ManagedUsersController_findAll: {
         parameters: {
             query?: {
@@ -9053,6 +9583,90 @@ export interface operations {
             };
             /** @description Usuario no encontrado */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Límite de peticiones superado; la cabecera Retry-After indica cuántos segundos esperar */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Error interno (mensaje genérico, sin detalles) */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    ManagedUsersController_removeInstitutionAccess: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description UUID del recurso. Si no existe o es de otra institución: 404 */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Acceso quitado */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Datos inválidos: en errores de validación `message` es la lista de errores */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Sin sesión válida: cookie ausente o vencida, sesión revocada, usuario inactivo o sin acceso a la institución activa. Renovar con POST /api/auth/refresh-token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Sin permiso para esta acción. También «Debe cambiar la contraseña» mientras la contraseña sea temporal */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Usuario no encontrado */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Solo tiene acceso a esta institución */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -9663,6 +10277,309 @@ export interface operations {
             };
         };
     };
+    TeachersController_linkCandidate: {
+        parameters: {
+            query: {
+                /** @description CC, TI, CE... */
+                documentType: string;
+                /** @description Número de documento */
+                documentNumber: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LinkCandidateResponseDto"];
+                };
+            };
+            /** @description Datos inválidos: en errores de validación `message` es la lista de errores */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Sin sesión válida: cookie ausente o vencida, sesión revocada, usuario inactivo o sin acceso a la institución activa. Renovar con POST /api/auth/refresh-token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Sin permiso para esta acción. También «Debe cambiar la contraseña» mientras la contraseña sea temporal */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description No hay una cuenta activa con ese documento */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Ya pertenece o no se puede invitar como docente */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Límite de peticiones superado; la cabecera Retry-After indica cuántos segundos esperar */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Error interno (mensaje genérico, sin detalles) */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    TeachersController_listInvitations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvitationResponseDto"][];
+                };
+            };
+            /** @description Sin sesión válida: cookie ausente o vencida, sesión revocada, usuario inactivo o sin acceso a la institución activa. Renovar con POST /api/auth/refresh-token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Sin permiso para esta acción. También «Debe cambiar la contraseña» mientras la contraseña sea temporal */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Límite de peticiones superado; la cabecera Retry-After indica cuántos segundos esperar */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Error interno (mensaje genérico, sin detalles) */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    TeachersController_invite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateInvitationDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvitationResponseDto"];
+                };
+            };
+            /** @description Datos inválidos o sede inactiva */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Sin sesión válida: cookie ausente o vencida, sesión revocada, usuario inactivo o sin acceso a la institución activa. Renovar con POST /api/auth/refresh-token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Sin permiso para esta acción. También «Debe cambiar la contraseña» mientras la contraseña sea temporal */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description No hay una cuenta activa con ese documento, o sede no encontrada */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Ya pertenece, ya tiene una invitación pendiente o no se puede invitar */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Límite diario de invitaciones de la institución */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Error interno (mensaje genérico, sin detalles) */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    TeachersController_cancelInvitation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description UUID de la invitación. Si no está pendiente o es de otra institución: 404 */
+                invitationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Invitación cancelada */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Datos inválidos: en errores de validación `message` es la lista de errores */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Sin sesión válida: cookie ausente o vencida, sesión revocada, usuario inactivo o sin acceso a la institución activa. Renovar con POST /api/auth/refresh-token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Sin permiso para esta acción. También «Debe cambiar la contraseña» mientras la contraseña sea temporal */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Invitación no encontrada */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Límite de peticiones superado; la cabecera Retry-After indica cuántos segundos esperar */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Error interno (mensaje genérico, sin detalles) */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
     TeachersController_findAll: {
         parameters: {
             query?: {
@@ -9962,6 +10879,309 @@ export interface operations {
             };
             /** @description Ya existe un usuario con ese documento o email */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Límite de peticiones superado; la cabecera Retry-After indica cuántos segundos esperar */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Error interno (mensaje genérico, sin detalles) */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    StudentsController_linkCandidate: {
+        parameters: {
+            query: {
+                /** @description CC, TI, CE... */
+                documentType: string;
+                /** @description Número de documento */
+                documentNumber: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LinkCandidateResponseDto"];
+                };
+            };
+            /** @description Datos inválidos: en errores de validación `message` es la lista de errores */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Sin sesión válida: cookie ausente o vencida, sesión revocada, usuario inactivo o sin acceso a la institución activa. Renovar con POST /api/auth/refresh-token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Sin permiso para esta acción. También «Debe cambiar la contraseña» mientras la contraseña sea temporal */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description No hay una cuenta activa con ese documento */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Ya pertenece o no se puede invitar como estudiante */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Límite de peticiones superado; la cabecera Retry-After indica cuántos segundos esperar */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Error interno (mensaje genérico, sin detalles) */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    StudentsController_listInvitations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvitationResponseDto"][];
+                };
+            };
+            /** @description Sin sesión válida: cookie ausente o vencida, sesión revocada, usuario inactivo o sin acceso a la institución activa. Renovar con POST /api/auth/refresh-token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Sin permiso para esta acción. También «Debe cambiar la contraseña» mientras la contraseña sea temporal */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Límite de peticiones superado; la cabecera Retry-After indica cuántos segundos esperar */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Error interno (mensaje genérico, sin detalles) */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    StudentsController_invite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateInvitationDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvitationResponseDto"];
+                };
+            };
+            /** @description Datos inválidos o sede inactiva */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Sin sesión válida: cookie ausente o vencida, sesión revocada, usuario inactivo o sin acceso a la institución activa. Renovar con POST /api/auth/refresh-token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Sin permiso para esta acción. También «Debe cambiar la contraseña» mientras la contraseña sea temporal */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description No hay una cuenta activa con ese documento, o sede no encontrada */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Ya pertenece, ya tiene una invitación pendiente o no se puede invitar */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Límite diario de invitaciones de la institución */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Error interno (mensaje genérico, sin detalles) */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    StudentsController_cancelInvitation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description UUID de la invitación. Si no está pendiente o es de otra institución: 404 */
+                invitationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Invitación cancelada */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Datos inválidos: en errores de validación `message` es la lista de errores */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Sin sesión válida: cookie ausente o vencida, sesión revocada, usuario inactivo o sin acceso a la institución activa. Renovar con POST /api/auth/refresh-token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Sin permiso para esta acción. También «Debe cambiar la contraseña» mientras la contraseña sea temporal */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Invitación no encontrada */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -14240,7 +15460,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponseDto"];
                 };
             };
-            /** @description Solo SUPER_ADMIN. También «Debe cambiar la contraseña» mientras la contraseña sea temporal */
+            /** @description Solo SUPER_ADMIN. Las vistas previas, además, solo con fetch desde la aplicación (Fetch Metadata: ni otro sitio, ni navegación, ni carga como recurso). También «Debe cambiar la contraseña» mientras la contraseña sea temporal */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -14328,7 +15548,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponseDto"];
                 };
             };
-            /** @description Solo SUPER_ADMIN. También «Debe cambiar la contraseña» mientras la contraseña sea temporal */
+            /** @description Solo SUPER_ADMIN. Las vistas previas, además, solo con fetch desde la aplicación (Fetch Metadata: ni otro sitio, ni navegación, ni carga como recurso). También «Debe cambiar la contraseña» mientras la contraseña sea temporal */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -14423,7 +15643,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponseDto"];
                 };
             };
-            /** @description Solo SUPER_ADMIN. También «Debe cambiar la contraseña» mientras la contraseña sea temporal */
+            /** @description Solo SUPER_ADMIN. Las vistas previas, además, solo con fetch desde la aplicación (Fetch Metadata: ni otro sitio, ni navegación, ni carga como recurso). También «Debe cambiar la contraseña» mientras la contraseña sea temporal */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -14502,7 +15722,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponseDto"];
                 };
             };
-            /** @description Solo SUPER_ADMIN. También «Debe cambiar la contraseña» mientras la contraseña sea temporal */
+            /** @description Solo SUPER_ADMIN. Las vistas previas, además, solo con fetch desde la aplicación (Fetch Metadata: ni otro sitio, ni navegación, ni carga como recurso). También «Debe cambiar la contraseña» mientras la contraseña sea temporal */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -14580,7 +15800,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponseDto"];
                 };
             };
-            /** @description Solo SUPER_ADMIN. También «Debe cambiar la contraseña» mientras la contraseña sea temporal */
+            /** @description Solo SUPER_ADMIN. Las vistas previas, además, solo con fetch desde la aplicación (Fetch Metadata: ni otro sitio, ni navegación, ni carga como recurso). También «Debe cambiar la contraseña» mientras la contraseña sea temporal */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -14658,7 +15878,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponseDto"];
                 };
             };
-            /** @description Solo SUPER_ADMIN. También «Debe cambiar la contraseña» mientras la contraseña sea temporal */
+            /** @description Solo SUPER_ADMIN. Las vistas previas, además, solo con fetch desde la aplicación (Fetch Metadata: ni otro sitio, ni navegación, ni carga como recurso). También «Debe cambiar la contraseña» mientras la contraseña sea temporal */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -14735,7 +15955,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponseDto"];
                 };
             };
-            /** @description Solo SUPER_ADMIN. También «Debe cambiar la contraseña» mientras la contraseña sea temporal */
+            /** @description Solo SUPER_ADMIN. Las vistas previas, además, solo con fetch desde la aplicación (Fetch Metadata: ni otro sitio, ni navegación, ni carga como recurso). También «Debe cambiar la contraseña» mientras la contraseña sea temporal */
             403: {
                 headers: {
                     [name: string]: unknown;

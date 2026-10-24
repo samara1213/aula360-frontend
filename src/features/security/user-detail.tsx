@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { z } from '@/lib/zod';
 import { errorMessage } from '@/api/errors';
@@ -74,6 +74,7 @@ function UserFile({ scope, user }: { scope: UsersScope; user: ManagedUser }) {
   const isSelf = session?.user.id === user.id;
   const name = `${user.firstName} ${user.lastName}`;
   const canUpdate = can.update && !isSelf;
+  const navigate = useNavigate();
 
   return (
     <>
@@ -91,7 +92,17 @@ function UserFile({ scope, user }: { scope: UsersScope; user: ManagedUser }) {
             </span>
           </span>
         }
-        actions={canUpdate && <AccountActions scope={scope} user={user} />}
+        actions={
+          canUpdate && (
+            <AccountActions
+              scope={scope}
+              user={user}
+              onRemoved={() => {
+                void navigate('/security/users');
+              }}
+            />
+          )
+        }
       />
       {isSelf && (
         <Alert>
@@ -134,6 +145,8 @@ function PersonalDataForm({
   readOnly: boolean;
 }) {
   const update = useUpdateUser(scope, user.id);
+  // También está en otra institución: sus datos los cambia el SUPER_ADMIN.
+  const locked = user.sharedElsewhere === true && scope.kind === 'institution';
   const form = useForm<z.input<typeof personalDataSchema>, unknown, PersonalData>({
     resolver: zodResolver(personalDataSchema),
     defaultValues: {
@@ -169,8 +182,12 @@ function PersonalDataForm({
           <strong className="break-all">{user.pendingEmail}</strong>.
         </Alert>
       )}
-      <PersonalDataFields register={form.register} errors={errors} />
-      {!readOnly && (
+      <PersonalDataFields
+        register={form.register}
+        errors={errors}
+        locked={locked ? { documentType: user.documentType ?? 'CC' } : undefined}
+      />
+      {!readOnly && !locked && (
         <Button type="submit" className="self-start" disabled={update.isPending}>
           {update.isPending ? 'Guardando…' : 'Guardar cambios'}
         </Button>

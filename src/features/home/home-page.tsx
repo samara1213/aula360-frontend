@@ -4,6 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { MenuIcon } from '@/features/menu/menu-icon';
 import { slugToPath } from '@/features/menu/menu';
 import { useNavMenu, type NavNode } from '@/features/menu/nav-menu';
+import { MyInvitations } from '@/features/invitations/my-invitations';
 import { PageHeader } from '@/features/layout/page-header';
 
 function greeting(date = new Date()): string {
@@ -35,6 +36,7 @@ export function HomePage() {
         title={`${greeting()}, ${session.user.firstName}`}
         description="Estos son los módulos a los que tienes acceso."
       />
+      <MyInvitations />
       {loading ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" aria-hidden="true">
           {[0, 1, 2, 3, 4, 5].map((i) => (

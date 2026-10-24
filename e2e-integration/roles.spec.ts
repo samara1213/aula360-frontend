@@ -5,14 +5,16 @@ import { expectAccessible, trackConsole } from '../e2e/checks';
 // Flujos por rol contra el backend real (playwright.integration.config.ts).
 // Van en orden sobre un mismo escenario: el docente registra la nota, el
 // estudiante la ve, el administrador genera el boletín y el estudiante lo
-// descarga.
+// descarga; después, el administrador invita a un docente de otra institución,
+// este acepta y el administrador le quita el acceso.
 
 type User = { id: string; email: string; firstName: string; lastName: string };
 type Scenario = {
   password: string;
   institution: { id: string; name: string };
   otherInstitution: { id: string; name: string };
-  users: Record<'superAdmin' | 'admin' | 'otherAdmin' | 'teacher' | 'student', User>;
+  users: Record<'superAdmin' | 'admin' | 'otherAdmin' | 'teacher' | 'student' | 'shared', User>;
+  sharedDocument: { documentType: string; documentNumber: string };
   studentId: string;
   courseId: string;
   periodId: string;
@@ -153,6 +155,72 @@ test.describe.serial('flujos por rol contra el backend real', () => {
     await page.goto(`/people/students/${studentId}`);
     await expect(page.getByText('No encontramos esta página')).toBeVisible();
     await logout(page, users.otherAdmin);
+  });
+
+  test('administrador: invita a un docente que tiene cuenta en otra institución', async ({
+    page,
+  }) => {
+    const { users, sharedDocument } = scenario();
+    await login(page, users.admin);
+    await page.goto('/people/teachers');
+    await page.getByRole('button', { name: 'Nuevo docente' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Nuevo docente' });
+    await dialog.getByLabel('Tipo de documento').selectOption(sharedDocument.documentType);
+    await dialog.getByLabel('Número de documento').fill(sharedDocument.documentNumber);
+    await dialog.getByLabel('Nombres').fill('Carlos');
+    await dialog.getByLabel('Apellidos').fill('Compartido');
+    await dialog.getByLabel('Sede').selectOption({ index: 1 }); // la sede del escenario
+    await dialog.getByRole('button', { name: 'Crear docente' }).click();
+
+    // El documento ya tiene cuenta (en la otra institución): se busca y se invita.
+    const panel = dialog.getByRole('region', { name: 'Cuenta existente' });
+    await panel.getByRole('button', { name: 'Buscar su cuenta' }).click();
+    await expect(panel.getByText('Carlos C.')).toBeVisible();
+    await expectAccessible(page);
+    await panel.getByRole('button', { name: 'Enviar invitación' }).click();
+    await expect(dialog).toBeHidden();
+    const pending = page.getByRole('list', { name: 'Invitaciones pendientes' });
+    await expect(pending.getByText('Carlos C.', { exact: true })).toBeVisible();
+    await expectAccessible(page);
+    await logout(page, users.admin);
+  });
+
+  test('docente invitado: acepta la invitación y entra a la institución', async ({ page }) => {
+    const { users, institution } = scenario();
+    await login(page, users.shared);
+    const list = page.getByRole('list', { name: 'Invitaciones' });
+    await expect(list.getByText(institution.name, { exact: true })).toBeVisible();
+    await expectAccessible(page);
+    await list
+      .getByRole('button', { name: `Aceptar la invitación de ${institution.name}` })
+      .click();
+    await expect(page.getByText(`Ya perteneces a ${institution.name}.`)).toBeVisible();
+    await page.getByRole('button', { name: 'Entrar' }).click();
+    await expect(
+      page.getByRole('button', { name: new RegExp(`Institución: ${institution.name}`) }),
+    ).toBeVisible();
+    await logout(page, users.shared);
+  });
+
+  test('administrador: ve su ficha en solo lectura y le quita el acceso', async ({ page }) => {
+    const { users } = scenario();
+    await login(page, users.admin);
+    await page.goto('/people/teachers');
+    await expect(page.getByRole('list', { name: 'Invitaciones pendientes' })).toBeHidden();
+    await page
+      .getByRole('link', { name: /Carlos Compartido/ })
+      .first()
+      .click();
+    await expect(page.getByRole('heading', { name: 'Carlos Compartido', level: 1 })).toBeVisible();
+    await expect(page.getByLabel('Nombres')).toHaveAttribute('readonly', '');
+
+    await page.getByRole('button', { name: 'Quitar acceso en esta institución' }).click();
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Quitar acceso' }).click();
+    await expect(page).toHaveURL(/\/people\/teachers$/);
+    await expect(
+      page.getByText('Carlos Compartido ya no tiene acceso a esta institución.'),
+    ).toBeVisible();
+    await logout(page, users.admin);
   });
 
   test('sin sesión (cookies borradas), vuelve al login y después a la página', async ({

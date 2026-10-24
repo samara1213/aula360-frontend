@@ -9,7 +9,9 @@ import { DialogClose, DialogContent } from '@/components/ui/dialog';
 import { CreatedAccountContent, type CreatedAccount } from '@/features/security/temporary-password';
 import { PersonalDataFields } from '@/features/security/user-form';
 import { useCampusChoices } from './campus-choices';
-import { useCreateStudent } from './people-api';
+import { useCreateStudent, useInvite } from './people-api';
+import { isExistingAccount } from './existing-account';
+import { LinkExistingPanel } from './link-existing';
 import { CampusSelect, StudentProfileFields } from './person-fields';
 import {
   emptyStudent,
@@ -27,6 +29,7 @@ const FORM_ID = 'create-student-form';
  */
 export function CreateStudentDialog({ onDone }: { onDone: (createdId?: string) => void }) {
   const create = useCreateStudent();
+  const invite = useInvite('students');
   const campuses = useCampusChoices('people.students');
   const [created, setCreated] = useState<CreatedAccount | null>(null);
   const form = useForm<StudentInput, unknown, StudentValues>({
@@ -95,6 +98,36 @@ export function CreateStudentDialog({ onDone }: { onDone: (createdId?: string) =
         className="flex flex-col gap-5"
       >
         {create.isError && <Alert variant="error">{errorMessage(create.error)}</Alert>}
+        {isExistingAccount(create.error) && (
+          <LinkExistingPanel
+            kind="students"
+            readDocument={() => ({
+              documentType: form.getValues('documentType'),
+              documentNumber: form.getValues('documentNumber').trim(),
+            })}
+            inviting={{ isPending: invite.isPending, error: invite.error }}
+            onInvite={(document, displayName) => {
+              const campusId = form.getValues('campusId');
+              if (!campuses.allowNone && !campusId) {
+                form.setError('campusId', {
+                  message: 'Elige la sede: solo puedes invitar a tus sedes.',
+                });
+                return;
+              }
+              invite.mutate(
+                { ...document, campusId: campusId || null },
+                {
+                  onSuccess: () => {
+                    toast.success(
+                      `Invitación enviada a ${displayName}: al entrar a Aula360 la acepta o la rechaza.`,
+                    );
+                    onDone();
+                  },
+                },
+              );
+            }}
+          />
+        )}
         {campuses.isError && (
           <Alert variant="error">No pudimos cargar las sedes. Cierra y vuelve a intentarlo.</Alert>
         )}

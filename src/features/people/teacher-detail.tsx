@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import type { z } from '@/lib/zod';
 import { errorMessage } from '@/api/errors';
@@ -16,7 +17,7 @@ import { AccountActions } from '@/features/security/account-actions';
 import { PersonalDataFields } from '@/features/security/user-form';
 import { personalDataSchema } from '@/features/security/user-schema';
 import { isUuid } from '@/lib/ids';
-import { useRefreshPeople, useTeacher, useUpdateTeacher } from './people-api';
+import { useForgetPerson, useRefreshPeople, useTeacher, useUpdateTeacher } from './people-api';
 import { TeacherProfileFields } from './person-fields';
 import { changedFields, teacherFields } from './person-schema';
 
@@ -49,6 +50,8 @@ function TeacherFile({ teacher }: { teacher: Teacher }) {
   // Activar, desactivar y la contraseña temporal son de la cuenta: permiso de Usuarios.
   const account = usePermissions('security.users');
   const refresh = useRefreshPeople('teachers');
+  const forget = useForgetPerson('teachers');
+  const navigate = useNavigate();
   const isSelf = session?.user.id === user.id;
   const name = `${user.firstName} ${user.lastName}`;
 
@@ -67,8 +70,12 @@ function TeacherFile({ teacher }: { teacher: Teacher }) {
           !isSelf && (
             <AccountActions
               scope={{ kind: 'institution' }}
-              user={{ ...user, userType: 'TEACHER' }}
+              user={{ ...user, userType: 'TEACHER', sharedElsewhere: teacher.sharedElsewhere }}
               onChanged={refresh}
+              onRemoved={() => {
+                forget(teacher.id);
+                void navigate('/people/teachers');
+              }}
             />
           )
         }
@@ -125,7 +132,11 @@ function TeacherForm({ teacher, readOnly }: { teacher: Teacher; readOnly: boolea
   return (
     <form noValidate onSubmit={(e) => void onSubmit(e)} className="flex flex-col gap-5">
       {update.isError && <Alert variant="error">{errorMessage(update.error)}</Alert>}
-      <PersonalDataFields register={form.register} errors={errors} />
+      <PersonalDataFields
+        register={form.register}
+        errors={errors}
+        locked={teacher.sharedElsewhere ? { documentType: user.documentType } : undefined}
+      />
       <TeacherProfileFields register={form.register} errors={errors} />
       {!readOnly && (
         <Button type="submit" className="self-start" disabled={update.isPending}>

@@ -66,6 +66,8 @@ export function mockSignedIn(session: Session = makeSession(), menu: MenuNode[] 
   server.use(
     http.get(apiUrl('/api/auth/me'), () => HttpResponse.json(session)),
     http.get(apiUrl('/api/menu-options/my-menu'), () => HttpResponse.json(menu)),
+    // Sin invitaciones de otras instituciones, salvo que la prueba registre otras.
+    http.get(apiUrl('/api/users/me/invitations'), () => HttpResponse.json([])),
   );
 }
 
@@ -80,8 +82,8 @@ export function page<T>(data: T[], page = 1, limit = 20, total = data.length) {
   return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
 }
 
-export function apiError(status: number, message: string) {
-  return HttpResponse.json({ statusCode: status, message }, { status });
+export function apiError(status: number, message: string, code?: string) {
+  return HttpResponse.json({ statusCode: status, message, ...(code && { code }) }, { status });
 }
 
 /**
