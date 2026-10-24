@@ -5,7 +5,8 @@ import { server } from './server';
 
 // Las pantallas se cargan bajo demanda (lazy): con todos los archivos en
 // paralelo, la primera importación puede pasar del segundo que espera findBy.
-configure({ asyncUtilTimeout: 3000 });
+// También el login (diferido desde la 3g-1): con la máquina cargada pasaba de 3 s.
+configure({ asyncUtilTimeout: 5000 });
 
 // jsdom no implementa matchMedia (lo usa el tema «Sistema»).
 Object.defineProperty(window, 'matchMedia', {

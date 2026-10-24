@@ -20,6 +20,7 @@ yarn lint
 yarn test         # Vitest
 yarn test:e2e     # Playwright (levanta yarn dev; la API va simulada)
 yarn test:e2e:prod # Playwright sobre el build con las cabeceras de producción
+yarn test:e2e:integration # Playwright contra el backend real (ver «Pruebas contra el backend»)
 yarn build        # dist/
 yarn headers      # cabeceras de producción con el hash del build (después de yarn build; --nginx para nginx)
 yarn api:types    # regenera src/api/schema.d.ts desde ../aula360-backend/openapi.json
@@ -64,6 +65,13 @@ Cross-Origin-Opener-Policy: same-origin
 - La API en el mismo sitio (ver «Sesión»), con `CORS_ORIGINS` y `FRONTEND_URL` del backend en el origen de la aplicación.
 
 `yarn test:e2e:prod` construye, levanta `vite preview` con estas cabeceras y recorre las pantallas: falla ante cualquier violación de la CSP o error de consola, y comprueba las cabeceras, la caché, la SPA y el script del tema. El proyecto `chrome` usa el Chrome instalado (visor de PDF real); sin Chrome, `yarn test:e2e:prod --project=chromium`.
+
+### Pruebas contra el backend
+
+`yarn test:e2e:integration` (`playwright.integration.config.ts`, `e2e-integration/`) recorre los flujos por rol sin API simulada: levanta el servidor de pruebas del backend (`yarn test:browser-server` en `../aula360-backend`, puerto 3100) y Vite en el 5174 con el proxy hacia él. El docente registra una nota, el estudiante la ve, el administrador genera el boletín (PDF real con Chromium) y el estudiante lo descarga; además, la vista previa del SUPER_ADMIN, el aislamiento entre instituciones y la sesión vencida, con axe y la consola limpia.
+
+- Necesita la base de pruebas del backend: `E2E_DB_MODE=isolated`, `DATABASE_URL_TEST` y `DB_SSL_TEST` (en el `.env` del backend o en la línea de comandos). Storage y correo van en memoria: no toca Supabase ni envía correos.
+- Nunca a la vez que las e2e del backend (comparten la base). Los datos que crea llevan el prefijo E2E y se barren al empezar la corrida siguiente.
 
 ### Bundle
 
